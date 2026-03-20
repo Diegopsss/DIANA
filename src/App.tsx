@@ -1,11 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
+import { supabase } from './utils/supabase'
 import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
+  const [supabaseStatus, setSupabaseStatus] = useState<string>('Checking...')
+
+  useEffect(() => {
+    const checkSupabaseConnection = async () => {
+      try {
+        const { data, error } = await supabase.from('_test_connection').select('*').limit(1)
+        if (error) {
+          setSupabaseStatus('Connected (no test table)')
+        } else {
+          setSupabaseStatus('Connected successfully!')
+        }
+      } catch (error) {
+        setSupabaseStatus('Connection failed')
+      }
+    }
+
+    checkSupabaseConnection()
+  }, [])
 
   return (
     <>
@@ -19,6 +38,9 @@ function App() {
           <h1>Get started</h1>
           <p>
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+          </p>
+          <p style={{ color: 'green', fontWeight: 'bold' }}>
+            Supabase Status: {supabaseStatus}
           </p>
         </div>
         <button
