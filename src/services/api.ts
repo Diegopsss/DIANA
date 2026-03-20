@@ -3,19 +3,25 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from '../types'
 
 export class ApiService {
   // Método genérico para obtener datos
-  static async get<T>(table: string, id?: string): Promise<ApiResponse<T>> {
+  static async get<T>(table: string, id?: string): Promise<ApiResponse<T | T[]>> {
     try {
-      let query = supabase.from(table).select('*')
-      
       if (id) {
-        query = query.eq('id', id).single()
+        const { data, error } = await supabase
+          .from(table)
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (error) throw error
+        return { data: data as T }
+      } else {
+        const { data, error } = await supabase
+          .from(table)
+          .select('*')
+
+        if (error) throw error
+        return { data: data as T[] }
       }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      return { data }
     } catch (error) {
       return {
         data: null as any,

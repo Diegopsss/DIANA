@@ -1,0 +1,473 @@
+.calendar-page {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(
+    180deg,
+    #B8756B 0%,
+    #C4917E 20%,
+    #D4B5A0 50%,
+    #A8B5A0 80%,
+    #7A9B8E 100%
+  );
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 100px;
+}
+
+.calendar-header {
+  position: relative;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 10;
+}
+
+.calendar-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.calendar-widget {
+  background: linear-gradient(135deg, #A0503C 0%, #B8756B 100%);
+  border-radius: 30px;
+  padding: 25px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.calendar-widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.calendar-month {
+  font-size: 14px;
+  font-weight: 500;
+  color: #F5E6D3;
+}
+
+.calendar-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #F5E6D3;
+}
+
+.calendar-grid {
+  position: relative;
+}
+
+.calendar-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.day-label {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #F5E6D3;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  background: transparent;
+  border: none;
+  color: #F5E6D3;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-day:hover {
+  background: rgba(245, 230, 211, 0.2);
+}
+
+.calendar-circles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.circle-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.circle {
+  aspect-ratio: 1;
+  border: 1.5px solid #F5E6D3;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+.widgets-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.diary-widget {
+  background: linear-gradient(135deg, #5C4A6B 0%, #7A5F8E 100%);
+  border-radius: 25px;
+  padding: 20px;
+  color: white;
+  min-height: 200px;
+}
+
+.widget-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 20px;
+  color: #F5E6D3;
+}
+
+.diary-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diary-task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #F5E6D3;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.task-line {
+  flex: 1;
+  height: 2px;
+  background: #F5E6D3;
+  opacity: 0.5;
+}
+
+.record-widget {
+  background: linear-gradient(135deg, #4A7A6B 0%, #5C9B8A 100%);
+  border-radius: 25px;
+  padding: 20px;
+  color: white;
+  min-height: 200px;
+}
+
+.record-section {
+  margin-bottom: 20px;
+}
+
+.record-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #F5E6D3;
+}
+
+.flow-indicators {
+  display: flex;
+  gap: 8px;
+}
+
+.flow-drop {
+  width: 20px;
+  height: 28px;
+  background: transparent;
+  border: 2px solid #F5E6D3;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+}
+
+.symptoms-icons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.symptom-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s ease;
+}
+
+.symptom-icon:hover {
+  transform: scale(1.1);
+}
+
+.recommendation-widget {
+  background: linear-gradient(135deg, #C4A88A 0%, #D4B89A 100%);
+  border-radius: 30px;
+  padding: 25px;
+  color: #2D3748;
+  position: relative;
+  overflow: hidden;
+}
+
+.recommendation-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  color: #2D3748;
+}
+
+.recommendation-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #4A5568;
+}
+
+.recommendation-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #2D3748;
+  margin-bottom: 20px;
+  max-width: 70%;
+}
+
+.recommendation-image {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  opacity: 0.9;
+}
+
+.nav-item-active {
+  opacity: 1;
+}
+
+.nav-item-active svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Tablet styles */
+@media (min-width: 768px) {
+  .calendar-content {
+    max-width: 700px;
+    padding: 30px;
+    gap: 25px;
+  }
+
+  .calendar-widget {
+    padding: 30px;
+  }
+
+  .calendar-title {
+    font-size: 28px;
+  }
+
+  .widgets-row {
+    gap: 25px;
+  }
+
+  .diary-widget,
+  .record-widget {
+    padding: 25px;
+    min-height: 220px;
+  }
+
+  .recommendation-widget {
+    padding: 30px;
+  }
+
+  .recommendation-title {
+    font-size: 22px;
+  }
+
+  .recommendation-text {
+    font-size: 14px;
+    max-width: 65%;
+  }
+
+  .bottom-nav {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 30px 30px 0 0;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1024px) {
+  .calendar-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .calendar-header {
+    max-width: 1200px;
+    width: 100%;
+    padding: 30px 40px;
+  }
+
+  .calendar-content {
+    max-width: 900px;
+    padding: 40px;
+    gap: 30px;
+  }
+
+  .calendar-widget {
+    padding: 35px;
+    border-radius: 35px;
+  }
+
+  .calendar-title {
+    font-size: 32px;
+  }
+
+  .calendar-day {
+    font-size: 14px;
+  }
+
+  .widgets-row {
+    gap: 30px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .diary-widget,
+  .record-widget {
+    padding: 30px;
+    min-height: 250px;
+    border-radius: 30px;
+  }
+
+  .widget-title {
+    font-size: 20px;
+  }
+
+  .recommendation-widget {
+    padding: 35px;
+    border-radius: 35px;
+  }
+
+  .recommendation-title {
+    font-size: 24px;
+  }
+
+  .recommendation-subtitle {
+    font-size: 18px;
+  }
+
+  .recommendation-text {
+    font-size: 15px;
+    max-width: 60%;
+  }
+
+  .recommendation-image {
+    right: 30px;
+    bottom: 30px;
+  }
+
+  .recommendation-image svg {
+    width: 140px;
+    height: 140px;
+  }
+
+  .bottom-nav {
+    max-width: 700px;
+    padding: 20px 40px;
+  }
+
+  .side-menu {
+    width: 350px;
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1440px) {
+  .calendar-content {
+    max-width: 1100px;
+  }
+
+  .widgets-row {
+    gap: 35px;
+  }
+
+  .recommendation-text {
+    max-width: 55%;
+    font-size: 16px;
+  }
+
+  .recommendation-image svg {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+/* Desktop - Layout en dos columnas para pantallas muy grandes */
+@media (min-width: 1600px) {
+  .calendar-content {
+    max-width: 1400px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .calendar-widget {
+    grid-column: 1 / -1;
+  }
+
+  .widgets-row {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .recommendation-widget {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-content {
+    padding: 15px;
+  }
+
+  .widgets-row {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendation-text {
+    max-width: 100%;
+    padding-right: 130px;
+  }
+
+  .calendar-widget {
+    padding: 20px;
+  }
+
+  .calendar-title {
+    font-size: 20px;
+  }
+}

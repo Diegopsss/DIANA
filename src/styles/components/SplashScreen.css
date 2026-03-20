@@ -1,0 +1,154 @@
+.splash-screen {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(
+    180deg,
+    #B8756B 0%,
+    #C4917E 25%,
+    #D4B5A0 50%,
+    #A8B5A0 75%,
+    #7A9B8E 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.logo-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rays {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ray {
+  position: absolute;
+  width: 2px;
+  height: 40px;
+  background: linear-gradient(to bottom, #F5E6D3, transparent);
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+}
+
+.stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.star {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #F5E6D3;
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
+  box-shadow: 0 0 10px #F5E6D3;
+}
+
+.moon {
+  position: absolute;
+  z-index: 2;
+}
+
+.brand-text {
+  position: absolute;
+  z-index: 3;
+  margin-top: 10px;
+}
+
+/* Tablet styles */
+@media (min-width: 768px) {
+  .logo-container {
+    width: 280px;
+    height: 280px;
+  }
+
+  .ray {
+    height: 60px;
+  }
+
+  .star {
+    width: 8px;
+    height: 8px;
+  }
+
+  .moon svg {
+    width: 80px;
+    height: 80px;
+  }
+
+  .brand-text svg {
+    width: 160px;
+    height: 50px;
+  }
+
+  .brand-text text {
+    font-size: 36px;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1024px) {
+  .logo-container {
+    width: 320px;
+    height: 320px;
+  }
+
+  .ray {
+    height: 70px;
+  }
+
+  .star {
+    width: 10px;
+    height: 10px;
+  }
+
+  .moon svg {
+    width: 100px;
+    height: 100px;
+  }
+
+  .brand-text svg {
+    width: 180px;
+    height: 60px;
+  }
+
+  .brand-text text {
+    font-size: 40px;
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1440px) {
+  .logo-container {
+    width: 360px;
+    height: 360px;
+  }
+
+  .ray {
+    height: 80px;
+  }
+
+  .brand-text svg {
+    width: 200px;
+    height: 70px;
+  }
+
+  .brand-text text {
+    font-size: 44px;
+  }
+}
