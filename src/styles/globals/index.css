@@ -1,25 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --diana-bg: #F5F5DC;
+  --diana-orange: #FF8C42;
+  --diana-cream: #FFF8DC;
+  --diana-earth: #8B7355;
+  --diana-soft: #FDF6E3;
+  --diana-warm: #DEB887;
+  --diana-text: #5D4E37;
+  --diana-text-light: #8B7355;
+  --diana-border: #D2B48C;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
+  font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: 18px;
+  line-height: 1.45;
   letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color: var(--diana-text);
+  background-color: var(--diana-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -30,33 +29,11 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -64,13 +41,13 @@
 
 body {
   margin: 0;
+  background-color: var(--diana-bg);
 }
 
 h1,
 h2 {
-  font-family: var(--heading);
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--diana-text);
 }
 
 h1 {
@@ -97,15 +74,110 @@ p {
 
 code,
 .counter {
-  font-family: var(--mono);
   display: inline-flex;
   border-radius: 4px;
-  color: var(--text-h);
+  color: var(--diana-text);
 }
 
 code {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
-  background: var(--code-bg);
+  background: var(--diana-soft);
+}
+
+/* Componentes personalizados para Diana */
+.diana-container {
+  background-color: #FFF8DC;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(139, 115, 85, 0.1), 0 2px 4px -1px rgba(139, 115, 85, 0.06);
+  padding: 1.5rem;
+  border: 1px solid #D2B48C;
+}
+
+.diana-card {
+  background-color: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(139, 115, 85, 0.1), 0 4px 6px -2px rgba(139, 115, 85, 0.05);
+  padding: 2rem;
+  transition: all 0.3s;
+}
+
+.diana-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(139, 115, 85, 0.1), 0 10px 10px -5px rgba(139, 115, 85, 0.04);
+}
+
+.diana-button-primary {
+  background-color: #FF8C42;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 1rem;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px -1px rgba(139, 115, 85, 0.1), 0 2px 4px -1px rgba(139, 115, 85, 0.06);
+  border: none;
+  cursor: pointer;
+}
+
+.diana-button-primary:hover {
+  opacity: 0.9;
+}
+
+.diana-button-secondary {
+  background-color: #FDF6E3;
+  color: #5D4E37;
+  padding: 0.75rem 1.5rem;
+  border-radius: 1rem;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px -1px rgba(139, 115, 85, 0.1), 0 2px 4px -1px rgba(139, 115, 85, 0.06);
+  border: none;
+  cursor: pointer;
+}
+
+.diana-button-secondary:hover {
+  background-color: #DEB887;
+}
+
+.diana-input {
+  background-color: white;
+  border: 1px solid #D2B48C;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #5D4E37;
+  transition: all 0.3s;
+}
+
+.diana-input::placeholder {
+  color: #8B7355;
+}
+
+.diana-input:focus {
+  outline: none;
+  border-color: #FF8C42;
+  box-shadow: 0 0 0 2px rgba(255, 140, 66, 0.2);
+}
+
+.diana-flow-selector {
+  background-color: #FF8C42;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s;
+  border: none;
+  cursor: pointer;
+}
+
+.diana-flow-selector:hover {
+  opacity: 0.9;
+}
+
+.diana-flow-selector.inactive {
+  background-color: #FDF6E3;
+  color: #5D4E37;
+}
+
+.diana-flow-selector.inactive:hover {
+  background-color: #DEB887;
 }

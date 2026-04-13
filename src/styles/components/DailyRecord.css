@@ -1,0 +1,326 @@
+/* DailyRecord Component - Desktop-first con Framer Motion */
+
+.daily-record-page {
+  width: 100vw;
+  min-height: 100vh;
+  background-color: var(--diana-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.daily-record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--diana-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.menu-button {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.menu-button:hover {
+  background-color: rgba(255, 140, 66, 0.1);
+}
+
+.logo-placeholder {
+  width: 120px;
+  height: 40px;
+  background: transparent;
+  border: 2px dashed var(--diana-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--diana-text-light);
+  font-size: 12px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-button {
+  background: transparent;
+  border: 2px solid var(--diana-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-button:hover {
+  border-color: var(--diana-orange);
+  background-color: rgba(255, 140, 66, 0.1);
+}
+
+/* Main Content */
+.daily-record-main {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.daily-record-container {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 25px;
+}
+
+.section-label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+/* Record Section */
+.flow-section {
+  margin-bottom: 30px;
+}
+
+.flow-indicators {
+  display: flex;
+  gap: 12px;
+}
+
+.flow-drop {
+  background: transparent;
+  border: 2px solid var(--diana-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--diana-border);
+}
+
+.flow-drop.active {
+  background-color: white;
+  border-color: white;
+  color: var(--diana-orange);
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
+}
+
+/* Symptoms Section */
+.symptoms-section {
+  margin-bottom: 30px;
+}
+
+.symptoms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.symptom-button {
+  background: transparent;
+  border: 1px solid var(--diana-border);
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--diana-text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.symptom-button:hover {
+  border-color: var(--diana-orange);
+  color: var(--diana-orange);
+  transform: translateY(-2px);
+}
+
+.symptom-button.active {
+  background: var(--diana-orange);
+  border-color: var(--diana-orange);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
+}
+
+/* Diary Section */
+.diary-section {
+  min-height: 500px;
+}
+
+.recent-entries {
+  margin-bottom: 30px;
+}
+
+.recent-label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.recent-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.recent-list::-webkit-scrollbar-track {
+  background: var(--diana-soft);
+  border-radius: 3px;
+}
+
+.recent-list::-webkit-scrollbar-thumb {
+  background: var(--diana-border);
+  border-radius: 3px;
+}
+
+.recent-list::-webkit-scrollbar-thumb:hover {
+  background: var(--diana-orange);
+}
+
+.recent-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  border: 1px solid var(--diana-border);
+}
+
+.entry-date {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.entry-preview {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.diary-input-section {
+  margin-top: 20px;
+}
+
+.diary-textarea {
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.diary-textarea::placeholder {
+  color: var(--diana-text-light);
+  opacity: 0.7;
+}
+
+/* Saving Indicator */
+.saving-indicator {
+  z-index: 1000;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--diana-text-light);
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .daily-record-main {
+    padding: 20px;
+  }
+  
+  .daily-record-container {
+    max-width: 100%;
+  }
+  
+  .symptoms-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .daily-record-header {
+    padding: 15px 20px;
+  }
+  
+  .section-title {
+    font-size: 24px;
+  }
+  
+  .flow-indicators {
+    gap: 8px;
+  }
+  
+  .flow-drop {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .symptoms-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .diary-textarea {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .daily-record-main {
+    padding: 15px;
+  }
+  
+  .flow-indicators {
+    justify-content: center;
+  }
+  
+  .symptom-button {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}

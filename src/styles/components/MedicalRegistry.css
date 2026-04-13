@@ -1,0 +1,326 @@
+/* MedicalRegistry Component - Desktop-first Form */
+
+.medical-registry-page {
+  width: 100vw;
+  min-height: 100vh;
+  background-color: var(--diana-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.medical-registry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--diana-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.menu-button {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.menu-button:hover {
+  background-color: rgba(255, 140, 66, 0.1);
+}
+
+.logo-placeholder {
+  width: 120px;
+  height: 40px;
+  background: transparent;
+  border: 2px dashed var(--diana-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--diana-text-light);
+  font-size: 12px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-button {
+  background: transparent;
+  border: 2px solid var(--diana-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-button:hover {
+  border-color: var(--diana-orange);
+  background-color: rgba(255, 140, 66, 0.1);
+}
+
+/* Main Content */
+.medical-registry-main {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.medical-registry-container {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  position: relative;
+}
+
+/* Progress Indicator */
+.progress-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.progress-dots {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.progress-label {
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Step Content */
+.step-content {
+  padding: 40px;
+  min-height: 600px;
+}
+
+.step-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.section-subtitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  margin-top: 40px;
+  border-bottom: 2px solid var(--diana-orange);
+  padding-bottom: 8px;
+  display: inline-block;
+}
+
+.form-section {
+  margin-bottom: 40px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.form-input {
+  background-color: #F3F4F6; /* Gris minimalista */
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--diana-text);
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.form-input::placeholder {
+  color: #9CA3AF;
+}
+
+.form-input:focus {
+  border-color: var(--diana-orange);
+  box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.1);
+  background-color: white;
+}
+
+.form-input:hover {
+  border-color: #D1D5DB;
+}
+
+/* Select styling */
+select.form-input {
+  cursor: pointer;
+}
+
+/* Textarea styling */
+textarea.form-input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Navigation Arrow */
+.navigation-arrow {
+  position: relative;
+}
+
+.arrow-button {
+  transition: all 0.2s ease;
+}
+
+.arrow-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
+.prev-button {
+  transition: all 0.2s ease;
+}
+
+.prev-button:hover {
+  background-color: var(--diana-orange);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* PDF Button */
+.pdf-button {
+  transition: all 0.2s ease;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-button:hover {
+  background: #E67A32;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
+}
+
+/* Spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .medical-registry-main {
+    padding: 20px;
+  }
+  
+  .medical-registry-container {
+    max-width: 100%;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-content {
+    padding: 30px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .medical-registry-header {
+    padding: 15px 20px;
+  }
+  
+  .step-title {
+    font-size: 24px;
+  }
+  
+  .section-subtitle {
+    font-size: 18px;
+  }
+  
+  .form-grid {
+    gap: 16px;
+  }
+  
+  .arrow-button {
+    width: 50px;
+    height: 50px;
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .prev-button {
+    bottom: 20px;
+    left: 20px;
+    padding: 10px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .medical-registry-main {
+    padding: 15px;
+  }
+  
+  .step-content {
+    padding: 20px 15px;
+    min-height: 500px;
+  }
+  
+  .step-title {
+    font-size: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .section-subtitle {
+    font-size: 16px;
+    margin-top: 30px;
+  }
+  
+  .form-input {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .pdf-button {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}

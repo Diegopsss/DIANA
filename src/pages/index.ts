@@ -1,3 +1,8 @@
 export { SplashScreen } from './SplashScreen'
 export { Login } from './Login'
+export { SignUp } from './SignUp'
+export { ForgotPassword } from './ForgotPassword'
 export { Calendar } from './Calendar'
+export { DailyRecord } from './DailyRecord'
+export { MedicalRegistry } from './MedicalRegistry'
+export { DianaChat } from './DianaChat'
