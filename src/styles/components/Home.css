@@ -1,0 +1,281 @@
+.home-page {
+  min-height: 100dvh;
+  background: #FDF6EE;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px;
+}
+
+/* Phase banner */
+.phase-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  margin: 12px 16px;
+  border-radius: 16px;
+}
+
+.phase-banner-label {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.phase-banner-sub {
+  font-size: 13px;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+.phase-banner-btn {
+  font-size: 12px;
+  font-weight: 600;
+  background: none;
+  border: 1.5px solid;
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+.phase-banner-btn:hover {
+  opacity: 0.7;
+}
+
+/* Setup prompt */
+.setup-prompt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 4px;
+  padding: 12px 16px;
+  background: #FFF3E8;
+  border: 1px solid #FFD4A8;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #C07028;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Section wrap for mini calendar */
+.home-section-wrap {
+  padding: 4px 16px 0;
+}
+
+/* Mini Calendar */
+.mini-cal {
+  width: 100%;
+  background: white;
+  border-radius: 18px;
+  border: 1px solid #EDE3D5;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: box-shadow 0.2s;
+  display: block;
+}
+
+.mini-cal:hover {
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+}
+
+.mini-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #F0E6D6;
+}
+
+.mini-cal-month {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2A1A0E;
+  text-transform: capitalize;
+}
+
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 8px;
+  gap: 2px;
+}
+
+.mini-cal-dow {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #B4A090;
+  padding: 4px 0;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.mini-cal-day {
+  text-align: center;
+  font-size: 12px;
+  color: #2A1A0E;
+  border-radius: 8px;
+  padding: 5px 2px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: 500;
+}
+
+.mini-cal-day.today {
+  font-weight: 800;
+  outline: 2px solid #2A1A0E;
+  outline-offset: -2px;
+  border-radius: 50%;
+}
+
+.mini-cal-day.period::after {
+  content: '•';
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 7px;
+  color: #B03050;
+  line-height: 1;
+}
+
+/* Diana section card */
+.diana-section {
+  background: white;
+  border-radius: 20px;
+  margin: 12px 16px;
+  border: 1px solid #EDE3D5;
+  overflow: hidden;
+}
+
+.diana-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+
+.diana-section-title {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #2A1A0E;
+  margin: 0;
+}
+
+.diana-section-action {
+  font-size: 13px;
+  color: #FF8C42;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Diary list */
+.diary-list {
+  padding: 0 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.diary-empty {
+  text-align: center;
+  color: #9B8B72;
+  font-size: 14px;
+  padding: 20px;
+  background: #FAF5EE;
+  border-radius: 12px;
+}
+
+.diary-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: #FAF5EE;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.diary-row:hover {
+  background: #F5EDE3;
+}
+
+.diary-row-date {
+  font-size: 11px;
+  color: #9B8B72;
+  white-space: nowrap;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.diary-row-text {
+  font-size: 13px;
+  color: #5D4E37;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diary-row-mood {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Record section */
+.record-body {
+  padding: 0 20px 20px;
+}
+
+.record-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #B4A090;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* Recommended button */
+.recommended-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+  background: #FDF0E6;
+  border: 1.5px solid #FFD4A8;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #D06020;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.recommended-btn:hover {
+  background: #FFE8D0;
+}

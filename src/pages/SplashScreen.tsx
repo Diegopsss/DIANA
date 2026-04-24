@@ -1,17 +1,19 @@
 import { motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 export const SplashScreen = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate('/login')
-    }, 3000)
+      navigate(user ? '/home' : '/login')
+    }, 1500)
 
     return () => clearTimeout(timer)
-  }, [navigate])
+  }, [navigate, user])
 
   return (
     <div className="splash-screen">

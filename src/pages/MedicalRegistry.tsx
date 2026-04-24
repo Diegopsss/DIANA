@@ -154,9 +154,8 @@ export const MedicalRegistry = () => {
       setToastMessage('Información médica guardada exitosamente')
       setShowToast(true)
       
-      // Navigate to calendar after successful save
       setTimeout(() => {
-        navigate('/calendar')
+        navigate('/home')
       }, 2000)
       
     } catch (err) {

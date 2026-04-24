@@ -1,0 +1,79 @@
+.tips-phase-card {
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.tips-phase-title {
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+  margin: 0 0 12px;
+}
+
+.tips-list {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tips-list li {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tips-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #9B8B72;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px;
+}
+
+.tips-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tip-card {
+  background: white;
+  border: 1px solid #EDE3D5;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.tip-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2A1A0E;
+  margin: 0 0 6px;
+}
+
+.tip-card-body {
+  font-size: 13px;
+  color: #7A6352;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.tips-ask-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 18px;
+  background: #2A1A0E;
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}

@@ -12,7 +12,7 @@ export const Login = () => {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (user) navigate('/calendar')
+    if (user) navigate('/home')
   }, [user, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +24,7 @@ export const Login = () => {
       if (error) {
         setError(error.message || 'Error al iniciar sesión')
       } else {
-        navigate('/calendar')
+        navigate('/home')
       }
     } catch {
       setError('Error inesperado al iniciar sesión')

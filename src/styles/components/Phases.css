@@ -1,0 +1,190 @@
+.phases-header {
+  padding: 20px 16px 8px;
+}
+
+.phases-title {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: #2A1A0E;
+  margin: 0 0 4px;
+}
+
+.phases-subtitle {
+  font-size: 13px;
+  color: #9B8B72;
+  margin: 0;
+}
+
+.phases-current-banner {
+  margin: 12px 16px 0;
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.phases-current-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+
+.phases-current-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.phases-current-day {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.phases-now-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.15);
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+
+.phases-list {
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.phase-card {
+  border-radius: 16px;
+  padding: 16px 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 2px solid transparent;
+  transition: opacity 0.15s;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+}
+
+.phase-card:hover { opacity: 0.85; }
+
+.phase-card.active-phase {
+  border-color: rgba(0,0,0,0.15);
+}
+
+.phase-card-info {
+  flex: 1;
+}
+
+.phase-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+
+.phase-card-days {
+  font-size: 12px;
+  margin: 0;
+  opacity: 0.75;
+}
+
+.phase-card-chevron {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* Bottom sheet modal */
+.phase-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.phase-modal {
+  width: 100%;
+  max-height: 80dvh;
+  border-radius: 24px 24px 0 0;
+  overflow-y: auto;
+  padding: 0 0 32px;
+}
+
+.phase-modal-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0,0,0,0.15);
+  margin: 12px auto 0;
+}
+
+.phase-modal-title {
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  margin: 16px 20px 4px;
+}
+
+.phase-modal-range {
+  font-size: 13px;
+  opacity: 0.65;
+  margin: 0 20px 16px;
+}
+
+.phase-modal-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #5D4E37;
+  margin: 0 20px 20px;
+}
+
+.phase-modal-tips-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9B8B72;
+  margin: 0 20px 10px;
+}
+
+.phase-modal-tips {
+  list-style: none;
+  margin: 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phase-modal-tips li {
+  font-size: 14px;
+  color: #5D4E37;
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.04);
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.phase-modal-close {
+  display: block;
+  margin: 20px 20px 0;
+  width: calc(100% - 40px);
+  padding: 14px;
+  background: #2A1A0E;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+}

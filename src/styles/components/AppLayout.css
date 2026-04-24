@@ -1,0 +1,311 @@
+/* ===== SHARED APP LAYOUT ===== */
+
+.app-page {
+  min-height: 100dvh;
+  background: #FDF6EE;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 76px;
+}
+
+/* ===== TOP BAR ===== */
+
+.diana-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #FDF6EE;
+  border-bottom: 1px solid #EDE3D5;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.diana-topbar-logo {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  color: #2A1A0E;
+  letter-spacing: -0.5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: #2A1A0E;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  background: #F0E6D6;
+}
+
+/* ===== BOTTOM NAV ===== */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  background: rgba(253, 246, 238, 0.97);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid #EDE3D5;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px env(safe-area-inset-bottom, 0px);
+  z-index: 200;
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  color: #B4A090;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+
+.bottom-nav-btn.active {
+  color: #FF8C42;
+}
+
+.bottom-nav-btn.center {
+  flex: 0 0 60px;
+  color: #FF8C42;
+}
+
+.bottom-nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+/* ===== HAMBURGER MENU ===== */
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(42, 26, 14, 0.45);
+  z-index: 300;
+}
+
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 288px;
+  background: #FDF6EE;
+  z-index: 310;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
+}
+
+.menu-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 52px 28px 24px;
+  border-bottom: 1px solid #EDE3D5;
+}
+
+.menu-drawer-title {
+  font-family: Georgia, serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: #2A1A0E;
+  margin: 0;
+}
+
+.menu-star {
+  color: #FF8C42;
+  font-size: 14px;
+}
+
+.menu-drawer-items {
+  flex: 1;
+  padding: 12px 0;
+}
+
+.menu-drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  color: #2A1A0E;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.menu-drawer-item:hover {
+  background: #F5EDE3;
+}
+
+.menu-drawer-item.signout {
+  color: #B03050;
+  margin-top: 8px;
+  border-top: 1px solid #EDE3D5;
+}
+
+/* ===== SECTION CARDS ===== */
+
+.diana-section {
+  background: white;
+  border-radius: 20px;
+  margin: 12px 16px;
+  border: 1px solid #EDE3D5;
+  overflow: hidden;
+}
+
+.diana-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+}
+
+.diana-section-title {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #2A1A0E;
+  margin: 0;
+}
+
+.diana-section-action {
+  font-size: 13px;
+  color: #FF8C42;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+/* ===== RECORD WIDGET ===== */
+
+.flow-drops-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.flow-drop-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.flow-drop-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.flow-drop-btn:active {
+  transform: scale(0.88);
+}
+
+.flow-drop-label {
+  font-size: 10px;
+  color: #9B8B72;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.symptoms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.symptom-pill {
+  padding: 10px 12px;
+  background: #F8F2EA;
+  border: 1.5px solid #E4D8C8;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #5D4E37;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.symptom-pill.active {
+  background: #FF8C42;
+  border-color: #FF8C42;
+  color: white;
+}
+
+/* ===== SAVING INDICATOR ===== */
+
+.saving-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #9B8B72;
+}
+
+.saving-dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9B8B72;
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
