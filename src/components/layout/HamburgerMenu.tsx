@@ -9,6 +9,16 @@ interface Props {
 
 const ITEMS = [
   {
+    label: 'Inicio',
+    path: '/home',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     label: 'Configuración',
     path: '/settings',
     icon: (
