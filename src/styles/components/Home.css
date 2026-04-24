@@ -1,6 +1,6 @@
 .home-page {
   min-height: 100dvh;
-  background: #FDF6EE;
+  background: linear-gradient(160deg, #C07868 0%, #C4917E 40%, #B0A898 75%, #9BAD98 100%);
   display: flex;
   flex-direction: column;
 }
@@ -9,6 +9,228 @@
   flex: 1;
   overflow-y: auto;
   padding-bottom: 80px;
+}
+
+/* Home grid layout */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.home-grid-item {
+  min-height: 0;
+}
+
+/* Desktop: 3 columns x 2 rows */
+@media (min-width: 769px) {
+  .home-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 16px 24px;
+  }
+}
+
+/* Section colors */
+.mini-cal {
+  background: #A04024 !important;
+  border-color: #A04024 !important;
+}
+
+.mini-cal-header {
+  border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.mini-cal-month {
+  color: white !important;
+}
+
+.mini-cal-dow {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.mini-cal-day {
+  color: white !important;
+}
+
+.mini-cal-day.today {
+  outline-color: white !important;
+}
+
+.mini-cal-header svg path {
+  stroke: white !important;
+}
+
+.diary-section {
+  background: #554466 !important;
+  border-color: #554466 !important;
+}
+
+.diary-section .diana-section-title {
+  color: white !important;
+}
+
+.diary-section .diana-section-action {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.diary-empty {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.diary-row {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.diary-row:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.diary-row-date {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.diary-row-text {
+  color: white !important;
+}
+
+.diary-row-mood {
+  color: white !important;
+}
+
+.record-section {
+  background: #144444 !important;
+  border-color: #144444 !important;
+}
+
+.record-section .diana-section-title {
+  color: white !important;
+}
+
+.record-label {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.flow-drop-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.flow-drop-btn svg path {
+  stroke: white !important;
+  fill: white !important;
+}
+
+.symptom-pill {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
+.symptom-pill.active {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.setup-prompt {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+}
+
+.setup-prompt svg {
+  stroke: white !important;
+}
+
+.saving-dot {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.saving-dot::before {
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Recommendation section */
+.recommendation-section {
+  width: 100%;
+  background: #ae9773;
+  border: none;
+  border-radius: 20px;
+  padding: 24px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s;
+  text-align: left;
+}
+
+.recommendation-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.recommendation-title {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: white;
+  margin: 0;
+}
+
+.recommendation-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Phases section */
+.phases-section {
+  width: 100%;
+  background: #2D6A4F;
+  border: none;
+  border-radius: 20px;
+  padding: 24px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s;
+  text-align: left;
+}
+
+.phases-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.phases-phase {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.phases-title {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: white;
+  margin: 0;
+}
+
+.phases-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* Phase banner */
