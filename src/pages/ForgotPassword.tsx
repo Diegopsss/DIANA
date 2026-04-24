@@ -14,18 +14,16 @@ export const ForgotPassword = () => {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
-      
       if (error) {
         setError(error.message || 'Error al enviar el correo de recuperación')
       } else {
         setSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setError('Error inesperado al enviar el correo')
     } finally {
       setLoading(false)
@@ -33,130 +31,109 @@ export const ForgotPassword = () => {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-header">
-        <motion.button
-          className="menu-button"
-          onClick={() => navigate('/login')}
-          whileTap={{ scale: 0.95 }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#F5E6D3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </motion.button>
-
-        <motion.div
-          className="logo-header"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          {/* Espacio reservado para logo */}
-        </motion.div>
-      </div>
+    <div className="auth-page">
+      <motion.div
+        className="auth-brand"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="auth-brand-content">
+          <div className="auth-brand-logo" />
+          <h1 className="auth-brand-name">Diana</h1>
+          <p className="auth-brand-tagline">
+            Tu compañera de salud y bienestar personal
+          </p>
+        </div>
+      </motion.div>
 
       <motion.div
-        className="login-container"
-        initial={{ opacity: 0, y: 50 }}
+        className="auth-panel"
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.6 }}
+        transition={{ duration: 0.45, delay: 0.1 }}
       >
-        <motion.div
-          className="login-card"
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-        >
-          <h1 className="login-title">Recuperar contraseña</h1>
-          <div className="title-underline"></div>
+        <button className="auth-back-btn" onClick={() => navigate('/login')}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Volver al inicio de sesión
+        </button>
 
-          {success ? (
-            <motion.div
-              className="success-message"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <svg className="success-icon" width="60" height="60" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#48BB78" strokeWidth="2"/>
-                <path d="M8 12l2 2 4-4" stroke="#48BB78" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <h2 className="auth-title">Recuperar contraseña</h2>
+        <p className="auth-subtitle">Te enviaremos un enlace de recuperación</p>
+
+        {success ? (
+          <motion.div
+            className="auth-success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="auth-success-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <p>¡Correo enviado!</p>
-              <p className="success-subtext">Revisa tu bandeja de entrada para restablecer tu contraseña.</p>
-              <motion.button
-                onClick={() => navigate('/login')}
-                className="login-button"
-                style={{ marginTop: '20px' }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Volver al inicio de sesión
-              </motion.button>
-            </motion.div>
-          ) : (
-            <>
-              <motion.p
-                className="forgot-password-description"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
-              </motion.p>
+            </div>
+            <p className="auth-success-title">¡Correo enviado!</p>
+            <p className="auth-success-text">
+              Revisa tu bandeja de entrada para restablecer tu contraseña.
+            </p>
+            <button
+              onClick={() => navigate('/login')}
+              className="auth-btn"
+              style={{ marginTop: '8px' }}
+            >
+              Volver al inicio de sesión
+            </button>
+          </motion.div>
+        ) : (
+          <>
+            <p className="auth-description">
+              Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+            </p>
 
-              <form onSubmit={handleSubmit}>
-                <motion.div
-                  className="input-group"
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  <input
-                    type="email"
-                    placeholder="Correo electrónico"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="login-input"
-                    required
-                  />
-                </motion.div>
-
-                {error && (
-                  <motion.div
-                    className="error-message"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    {error}
-                  </motion.div>
-                )}
-
-                <motion.button
-                  type="submit"
-                  className="login-button"
-                  whileHover={{ scale: loading ? 1 : 1.02 }}
-                  whileTap={{ scale: loading ? 1 : 0.98 }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.8 }}
+            <form onSubmit={handleSubmit} className="auth-form">
+              <div className="auth-field">
+                <label htmlFor="email" className="auth-label">Correo electrónico</label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="auth-input"
+                  required
                   disabled={loading}
-                >
-                  {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
-                </motion.button>
-              </form>
+                  autoComplete="email"
+                />
+              </div>
 
-              <motion.div
-                className="login-links"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-              >
-                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/login'); }} className="create-account">
-                  Volver al inicio de sesión
-                </a>
-              </motion.div>
-            </>
-          )}
-        </motion.div>
+              {error && (
+                <motion.div
+                  className="auth-error"
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              <button type="submit" className="auth-btn" disabled={loading}>
+                {loading ? (
+                  <>
+                    <svg className="auth-btn-spinner" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeDashoffset="10" />
+                    </svg>
+                    Enviando...
+                  </>
+                ) : (
+                  'Enviar enlace de recuperación'
+                )}
+              </button>
+            </form>
+          </>
+        )}
       </motion.div>
     </div>
   )
