@@ -1,14 +1,306 @@
 .home-page {
-  min-height: 100dvh;
-  background: #FDF6EE;
+  height: 100vh;
+  background: linear-gradient(160deg, #C07868 0%, #C4917E 40%, #B0A898 75%, #9BAD98 100%);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .home-content {
   flex: 1;
-  overflow-y: auto;
-  padding-bottom: 80px;
+  overflow: hidden;
+  padding-bottom: 100px;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Home grid layout */
+.home-grid {
+  display: grid !important;
+  width: 100%;
+  height: 100vh;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 15px;
+  padding: 15px;
+  overflow: hidden;
+}
+
+.home-grid-item-calendar {
+  grid-column: 1;
+  grid-row: span 2;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.home-grid-item-diary {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.home-grid-item-record {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.home-grid-item-recommendation {
+  grid-column: 3;
+  grid-row: span 2;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.home-grid-item {
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-grid-item-diary,
+.home-grid-item-record {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-grid-item:not(.home-grid-item-span-2) {
+  height: 100%;
+}
+
+.home-grid-item-span-2 {
+  grid-column: span 2;
+}
+
+/* Mobile adjustments */
+@media (max-width: 1023px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .home-grid-item-calendar {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .home-grid-item-diary {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .home-grid-item-record {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .home-grid-item-recommendation {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .home-grid-item {
+    width: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+  }
+
+  /* Create flex container for diary and record in mobile */
+  .home-grid-item-diary,
+  .home-grid-item-record {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  .mini-cal-header {
+    padding: 10px 12px;
+  }
+
+  .mini-cal-month {
+    font-size: 11px;
+  }
+
+  .mini-cal-dow {
+    font-size: 8px;
+  }
+
+  .mini-cal-day {
+    font-size: 9px;
+    padding: 4px 2px;
+    min-height: 22px;
+  }
+
+  .diana-section-header {
+    padding: 12px 12px 10px;
+  }
+
+  .diana-section-title {
+    font-size: 13px;
+  }
+
+  .diana-section-action {
+    font-size: 11px;
+  }
+
+  .diary-list {
+    padding: 0 12px 12px;
+    gap: 5px;
+  }
+
+  .diary-row {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .diary-row-date {
+    font-size: 9px;
+  }
+
+  .diary-row-text {
+    font-size: 11px;
+  }
+
+  .diary-row-mood {
+    font-size: 13px;
+  }
+
+  .record-body {
+    padding: 0 12px 12px;
+  }
+
+  .record-label {
+    font-size: 9px;
+    margin-bottom: 8px;
+  }
+
+  .flow-drop-label {
+    font-size: 8px !important;
+  }
+
+  .symptom-pill {
+    font-size: 10px !important;
+    padding: 8px 8px !important;
+  }
+
+  .recommended-btn {
+    font-size: 12px;
+    padding: 16px;
+    margin-top: 0;
+    height: 100%;
+    border-radius: 16px;
+  }
+
+  /* Diary checklist mobile adjustments */
+  .diary-checklist-header {
+    padding: 14px 16px 12px;
+  }
+
+  .diary-checklist-title {
+    font-size: 14px;
+    letter-spacing: 4px;
+  }
+
+  .diary-checklist {
+    padding: 12px 16px 16px;
+    gap: 10px;
+  }
+
+  .diary-checkbox {
+    width: 16px;
+    height: 16px;
+  }
+
+  .diary-checklist-item {
+    gap: 12px;
+  }
+
+  .diary-checklist-date {
+    font-size: 9px;
+  }
+
+  .diary-checklist-text {
+    font-size: 12px;
+  }
+
+  /* Recommendation card mobile adjustments */
+  .recommendation-card {
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .recommendation-header {
+    margin-bottom: 12px;
+  }
+
+  .recommendation-title {
+    font-size: 12px;
+    letter-spacing: 3px;
+  }
+
+  .recommendation-illustration svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .recommendation-subtitle {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .recommendation-text {
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+
+  .recommendation-cta {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Extra small screens - stack diary and record */
+@media (max-width: 350px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "calendar"
+      "diary"
+      "record"
+      "recommendation";
+  }
+}
+
+/* Desktop: 2 columns */
+@media (min-width: 769px) {
+  .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "calendar calendar"
+      "diary record"
+      "recommendation recommendation";
+    gap: 20px;
+    padding: 20px;
+  }
+}
+
+/* Large desktop: max-width and centering */
+@media (min-width: 1024px) {
+  .home-content {
+    width: 100%;
+  }
 }
 
 /* Phase banner */
@@ -66,78 +358,108 @@
 
 /* Section wrap for mini calendar */
 .home-section-wrap {
-  padding: 4px 16px 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Mini Calendar */
 .mini-cal {
   width: 100%;
+  max-width: 100%;
   background: white;
-  border-radius: 18px;
-  border: 1px solid #EDE3D5;
+  border-radius: 24px;
+  border: 1px solid #F0E8DC;
   overflow: hidden;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: box-shadow 0.2s;
-  display: block;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .mini-cal:hover {
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .mini-cal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid #F0E6D6;
+  padding: clamp(6px, 1.2vw, 10px) clamp(8px, 1.5vw, 14px);
+  background: linear-gradient(135deg, #F8F4F0 0%, #F0E8DC 100%);
+  border-bottom: 1px solid #E8E0D4;
 }
 
 .mini-cal-month {
-  font-size: 15px;
-  font-weight: 600;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(8px, 1.2vw, 11px);
+  font-weight: 500;
   color: #2A1A0E;
-  text-transform: capitalize;
+  letter-spacing: clamp(0.5px, 0.1vw, 1px);
+  text-transform: uppercase;
 }
 
 .mini-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  padding: 8px;
-  gap: 2px;
+  gap: clamp(1px, 0.3vw, 3px);
+  padding: clamp(6px, 1.2vw, 10px) clamp(8px, 1.5vw, 14px);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .mini-cal-dow {
+  font-size: 7px;
+  font-weight: 600;
+  color: #9B8B72;
   text-align: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #B4A090;
-  padding: 4px 0;
-  letter-spacing: 0.3px;
   text-transform: uppercase;
+  letter-spacing: 0.2px;
+  padding-bottom: 3px;
 }
 
 .mini-cal-day {
+  font-size: 8px;
+  font-weight: 500;
+  color: #3D3D3D;
   text-align: center;
-  font-size: 12px;
-  color: #2A1A0E;
-  border-radius: 8px;
-  padding: 5px 2px;
-  min-height: 28px;
+  padding: 2px 1px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  font-weight: 500;
+}
+
+.mini-cal-day:hover {
+  background: #F5F0E8;
+  transform: scale(1.05);
 }
 
 .mini-cal-day.today {
-  font-weight: 800;
-  outline: 2px solid #2A1A0E;
-  outline-offset: -2px;
-  border-radius: 50%;
+  background: linear-gradient(135deg, #C07868 0%, #D49564 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(192, 120, 104, 0.3);
+}
+
+.mini-cal-day.period {
+  color: #C07868;
+  font-weight: 600;
+  background: #F8F0E8;
 }
 
 .mini-cal-day.period::after {
@@ -153,29 +475,42 @@
 /* Diana section card */
 .diana-section {
   background: white;
-  border-radius: 20px;
-  margin: 12px 16px;
-  border: 1px solid #EDE3D5;
+  border-radius: 24px;
+  margin: 0;
+  border: 1px solid #F0E8DC;
   overflow: hidden;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.diana-section > *:not(.diana-section-header) {
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .diana-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px 12px;
+  padding: clamp(8px, 1.2vw, 12px) clamp(10px, 1.5vw, 16px) clamp(6px, 1vw, 10px);
+  border-bottom: 1px solid #E8E0D4;
 }
 
 .diana-section-title {
   font-family: Georgia, serif;
-  font-size: 18px;
+  font-size: clamp(11px, 2vh, 14px);
   font-weight: 400;
   color: #2A1A0E;
   margin: 0;
 }
 
 .diana-section-action {
-  font-size: 13px;
+  font-size: 11px;
   color: #FF8C42;
   font-weight: 600;
   background: none;
@@ -186,30 +521,32 @@
 
 /* Diary list */
 .diary-list {
-  padding: 0 12px 16px;
+  padding: 0 clamp(10px, 1.5vw, 16px) clamp(8px, 1.2vw, 12px);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: clamp(3px, 0.5vw, 5px);
+  flex: 1;
+  overflow-y: auto;
 }
 
 .diary-empty {
   text-align: center;
   color: #9B8B72;
-  font-size: 14px;
-  padding: 20px;
+  font-size: 11px;
+  padding: 12px;
   background: #FAF5EE;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .diary-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
+  gap: 6px;
+  padding: 6px 8px;
   background: #FAF5EE;
-  border-radius: 12px;
-  border: none;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   text-align: left;
   width: 100%;
@@ -222,7 +559,7 @@
 }
 
 .diary-row-date {
-  font-size: 11px;
+  font-size: 9px;
   color: #9B8B72;
   white-space: nowrap;
   font-weight: 600;
@@ -230,7 +567,7 @@
 }
 
 .diary-row-text {
-  font-size: 13px;
+  font-size: 11px;
   color: #5D4E37;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -238,22 +575,219 @@
 }
 
 .diary-row-mood {
-  font-size: 16px;
+  font-size: 14px;
   flex-shrink: 0;
+}
+
+/* Diary checklist minimalist design */
+.diary-checklist-section {
+  background: #FAFAFA;
+  border-radius: 20px;
+  margin: 0;
+  border: 1px solid #E8E8E8;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.diary-checklist-section > *:not(.diary-checklist-header) {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.diary-checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(8px, 1.2vw, 12px) clamp(10px, 1.5vw, 16px) clamp(6px, 1vw, 10px);
+  border-bottom: 1px solid #E8E0D4;
+}
+
+.diary-checklist-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: clamp(9px, 1.3vw, 13px);
+  font-weight: 400;
+  color: #2A2A2A;
+  margin: 0;
+  letter-spacing: clamp(2px, 0.3vw, 4px);
+  text-transform: uppercase;
+}
+
+.diary-checklist {
+  padding: clamp(6px, 1vw, 10px) clamp(10px, 1.5vw, 16px) clamp(8px, 1.2vw, 12px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 0.8vw, 10px);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.diary-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  transition: transform 0.15s;
+}
+
+.diary-checklist-item:hover {
+  transform: translateX(4px);
+}
+
+.diary-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #C0C0C0;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: white;
+  transition: all 0.2s;
+}
+
+.diary-checklist-item:hover .diary-checkbox {
+  border-color: #A0A0A0;
+}
+
+.diary-checklist-line {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid #E8E8E8;
+  padding-bottom: 8px;
+}
+
+.diary-checklist-date {
+  font-size: 10px;
+  color: #A0A0A0;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.diary-checklist-text {
+  font-size: 13px;
+  color: #4A4A4A;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Recommendation card minimalist wellness design */
+.recommendation-card {
+  background: white;
+  border-radius: 24px;
+  padding: 12px;
+  height: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid #F0E8DC;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.recommendation-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #2A2A2A;
+  margin: 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.recommendation-illustration {
+  flex-shrink: 0;
+  max-height: 100%;
+  width: auto;
+}
+
+.recommendation-illustration svg {
+  width: 40px;
+  height: 40px;
+  max-height: 100%;
+  width: auto;
+}
+
+.recommendation-subtitle {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3D3D3D;
+  margin: 0 0 6px 0;
+  flex-shrink: 0;
+}
+
+.recommendation-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #6B6B6B;
+  line-height: 1.4;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.recommendation-cta {
+  background: #D4A574;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(212, 165, 116, 0.3);
+}
+
+.recommendation-cta:hover {
+  background: #C49564;
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
 }
 
 /* Record section */
 .record-body {
-  padding: 0 20px 20px;
+  padding: 0 clamp(10px, 1.5vw, 16px) clamp(8px, 1.2vw, 12px);
+  flex: 1;
+  overflow-y: auto;
 }
 
 .record-label {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   color: #B4A090;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 /* Recommended button */
@@ -263,12 +797,12 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  margin-top: 20px;
-  padding: 13px;
+  margin-top: 2px;
+  padding: 6px;
   background: #FDF0E6;
   border: 1.5px solid #FFD4A8;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #D06020;
   cursor: pointer;

@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   SplashScreen, Login, SignUp, ForgotPassword,
   Home, Calendar, Phases, Diary, Tips, Settings,
@@ -22,26 +23,49 @@ import './styles/components/MedicalRegistry.css'
 import './styles/components/DianaChat.css'
 import './styles/components/Loading.css'
 
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+const AnimatedRoutes = () => {
+  const location = useLocation()
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<SplashScreen />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/policies" element={<Policies />} />
+        <Route path="/home" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
+        <Route path="/calendar" element={<ProtectedRoute><PageTransition><Calendar /></PageTransition></ProtectedRoute>} />
+        <Route path="/phases" element={<ProtectedRoute><PageTransition><Phases /></PageTransition></ProtectedRoute>} />
+        <Route path="/diary" element={<ProtectedRoute><PageTransition><Diary /></PageTransition></ProtectedRoute>} />
+        <Route path="/tips" element={<ProtectedRoute><PageTransition><Tips /></PageTransition></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
+        <Route path="/daily-record" element={<ProtectedRoute><PageTransition><DailyRecord /></PageTransition></ProtectedRoute>} />
+        <Route path="/medical-registry" element={<ProtectedRoute><PageTransition><MedicalRegistry /></PageTransition></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><PageTransition><DianaChat /></PageTransition></ProtectedRoute>} />
+      </Routes>
+    </AnimatePresence>
+  )
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          <Route path="/" element={<SplashScreen />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/policies" element={<Policies />} />
-          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-          <Route path="/phases" element={<ProtectedRoute><Phases /></ProtectedRoute>} />
-          <Route path="/diary" element={<ProtectedRoute><Diary /></ProtectedRoute>} />
-          <Route path="/tips" element={<ProtectedRoute><Tips /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/daily-record" element={<ProtectedRoute><DailyRecord /></ProtectedRoute>} />
-          <Route path="/medical-registry" element={<ProtectedRoute><MedicalRegistry /></ProtectedRoute>} />
-          <Route path="/chat" element={<ProtectedRoute><DianaChat /></ProtectedRoute>} />
-        </Routes>
+        <AnimatedRoutes />
       </Router>
       <SpeedInsights />
     </AuthProvider>

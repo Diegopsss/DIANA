@@ -287,81 +287,98 @@ export const Home = () => {
           </div>
         )}
 
-        {/* Calendar section */}
-        <div className="home-section-wrap">
-          <MiniCalendar profile={profile} periodDates={periodDates} onClick={() => navigate('/calendar')} />
-        </div>
-
-        {/* Diary section */}
-        <div className="diana-section">
-          <div className="diana-section-header">
-            <h2 className="diana-section-title">Diario</h2>
-            <button className="diana-section-action" onClick={() => navigate('/diary')}>
-              Escribir hoy →
-            </button>
+        {/* Grid layout */}
+        <div className="home-grid">
+          {/* Calendar section */}
+          <div className="home-grid-item home-grid-item-calendar">
+            <MiniCalendar profile={profile} periodDates={periodDates} onClick={() => navigate('/calendar')} />
           </div>
-          <div className="diary-list">
-            {recentLogs.length === 0 ? (
-              <div className="diary-empty">
-                Aún no hay entradas. ¡Empieza a escribir hoy!
+
+          {/* Diary section */}
+          <div className="home-grid-item home-grid-item-diary">
+            <div className="diana-section diary-checklist-section">
+              <div className="diary-checklist-header">
+                <h2 className="diary-checklist-title">DIARIO</h2>
+                <button className="diana-section-action" onClick={() => navigate('/diary')}>
+                  Escribir hoy →
+                </button>
               </div>
-            ) : (
-              recentLogs.map((log) => (
-                <motion.button
-                  key={log.date}
-                  className="diary-row"
-                  onClick={() => navigate(`/diary?date=${log.date}`)}
-                  whileTap={{ scale: 0.985 }}
-                >
-                  <span className="diary-row-date">{fmtDate(log.date)}</span>
-                  <span className="diary-row-text">{firstSentence(log.journal_entry)}</span>
-                  {log.mood_rank && <span className="diary-row-mood">{log.mood_rank}</span>}
-                </motion.button>
-              ))
-            )}
+              <div className="diary-checklist">
+                {recentLogs.length === 0 ? (
+                  <div className="diary-empty">
+                    Aún no hay entradas. ¡Empieza a escribir hoy!
+                  </div>
+                ) : (
+                  recentLogs.slice(0, 7).map((log) => (
+                    <motion.button
+                      key={log.date}
+                      className="diary-checklist-item"
+                      onClick={() => navigate(`/diary?date=${log.date}`)}
+                      whileTap={{ scale: 0.985 }}
+                    >
+                      <div className="diary-checkbox" />
+                      <div className="diary-checklist-line">
+                        <span className="diary-checklist-date">{fmtDate(log.date)}</span>
+                        <span className="diary-checklist-text">{firstSentence(log.journal_entry)}</span>
+                      </div>
+                    </motion.button>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Record section */}
-        <div className="diana-section">
-          <div className="diana-section-header">
-            <h2 className="diana-section-title">Récord</h2>
-            {saving && <span className="saving-dot">Guardando</span>}
-          </div>
+          {/* Record section */}
+          <div className="home-grid-item home-grid-item-record">
+            <div className="diana-section">
+              <div className="diana-section-header">
+                <h2 className="diana-section-title">Récord</h2>
+                {saving && <span className="saving-dot">Guardando</span>}
+              </div>
 
-          <div className="record-body">
-            <div className="record-label">Flujo</div>
-            <div className="flow-drops-row">
-              {FLOW_LEVELS.map((f, idx) => (
-                <div key={f.id} className="flow-drop-item">
-                  <FlowDrop
-                    filled={flowIndex >= 0 && idx <= flowIndex}
-                    onClick={() => handleFlow(f.id)}
-                  />
-                  <span className="flow-drop-label">{f.label}</span>
+              <div className="record-body">
+                <div className="record-label">Flujo</div>
+                <div className="flow-drops-row">
+                  {FLOW_LEVELS.map((f, idx) => (
+                    <div key={f.id} className="flow-drop-item">
+                      <FlowDrop
+                        filled={flowIndex >= 0 && idx <= flowIndex}
+                        onClick={() => handleFlow(f.id)}
+                      />
+                      <span className="flow-drop-label">{f.label}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="record-label" style={{ marginTop: 20 }}>Síntomas</div>
-            <div className="symptoms-grid">
-              {SYMPTOMS.map((s) => (
-                <SymptomPill key={s} label={s} active={symptoms.includes(s)} onToggle={() => handleSymptom(s)} />
-              ))}
+                <div className="record-label" style={{ marginTop: 20 }}>Síntomas</div>
+                <div className="symptoms-grid">
+                  {SYMPTOMS.map((s) => (
+                    <SymptomPill key={s} label={s} active={symptoms.includes(s)} onToggle={() => handleSymptom(s)} />
+                  ))}
+                </div>
+              </div>
             </div>
+          </div>
 
-            <motion.button
-              className="recommended-btn"
-              onClick={() => navigate('/tips')}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2a7 7 0 017 7c0 2.5-1.3 4.7-3.3 6V17a1 1 0 01-1 1h-5.4a1 1 0 01-1-1v-2C6.3 13.7 5 11.5 5 9a7 7 0 017-7z" stroke="currentColor" strokeWidth="2" />
-                <line x1="9.8" y1="21" x2="14.2" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              Recomendado para ti
-            </motion.button>
+          {/* Recommendation section */}
+          <div className="home-grid-item home-grid-item-recommendation">
+            <div className="recommendation-card">
+              <div className="recommendation-header">
+                <h2 className="recommendation-title">RECOMENDADO</h2>
+                <div className="recommendation-illustration">
+                  <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                    <circle cx="30" cy="30" r="28" fill="#F5F0E8" />
+                    <path d="M30 15C25 15 21 19 21 24C21 29 25 33 30 33C35 33 39 29 39 24C39 19 35 15 30 15Z" fill="#D4A574" />
+                    <path d="M20 38C20 38 24 34 30 34C36 34 40 38 40 38" stroke="#D4A574" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M25 26L30 31L35 26" stroke="#8B7355" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="recommendation-subtitle">Consejo del día</h3>
+              <p className="recommendation-text">
+                Dedica 10 minutos a la meditación matutina para reducir el estrés y mejorar tu bienestar emocional durante el ciclo.
+              </p>
+            </div>
           </div>
         </div>
       </div>
