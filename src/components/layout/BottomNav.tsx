@@ -55,12 +55,11 @@ const ITEMS = [
     ),
   },
   {
-    path: '/tips',
-    label: 'Consejos',
+    path: '/forum',
+    label: 'Foro',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2a7 7 0 017 7c0 2.5-1.3 4.7-3.3 6V17a1 1 0 01-1 1h-5.4a1 1 0 01-1-1v-2C6.3 13.7 5 11.5 5 9a7 7 0 017-7z" stroke="currentColor" strokeWidth="2" />
-        <line x1="9.8" y1="21" x2="14.2" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },

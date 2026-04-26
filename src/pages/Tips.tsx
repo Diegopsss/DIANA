@@ -9,11 +9,41 @@ import { getCurrentPhaseInfo, PHASE_CONFIG } from '../utils/cycleUtils'
 import type { CyclePhase } from '../utils/cycleUtils'
 
 const GENERAL_TIPS = [
-  { title: 'Hidratación', body: 'Beber al menos 8 vasos de agua al día puede reducir la hinchazón y los calambres menstruales.' },
-  { title: 'Movimiento consciente', body: 'El ejercicio suave como yoga o caminatas ayuda a equilibrar las hormonas en todas las fases del ciclo.' },
-  { title: 'Sueño reparador', body: 'Dormir 7-9 horas es fundamental para la salud hormonal y el manejo del dolor menstrual.' },
-  { title: 'Magnesio', body: 'El magnesio (presente en nueces, chocolate negro y aguacate) puede reducir los calambres y el SPM.' },
-  { title: 'Calor terapéutico', body: 'Una bolsa de calor en el abdomen puede aliviar los calambres tan efectivamente como el ibuprofeno.' },
+  {
+    icon: '💧',
+    color: '#E8F4FF',
+    accent: '#5BA4CF',
+    title: 'Hidratación',
+    body: 'Beber al menos 8 vasos de agua al día puede reducir la hinchazón y los calambres menstruales.',
+  },
+  {
+    icon: '🧘',
+    color: '#EDF7ED',
+    accent: '#5C9E6E',
+    title: 'Movimiento consciente',
+    body: 'El ejercicio suave como yoga o caminatas ayuda a equilibrar las hormonas en todas las fases del ciclo.',
+  },
+  {
+    icon: '🌙',
+    color: '#EEE8F8',
+    accent: '#8B6DB8',
+    title: 'Sueño reparador',
+    body: 'Dormir 7–9 horas es fundamental para la salud hormonal y el manejo del dolor menstrual.',
+  },
+  {
+    icon: '🥑',
+    color: '#F0F7E8',
+    accent: '#72A64A',
+    title: 'Magnesio',
+    body: 'El magnesio (presente en nueces, chocolate negro y aguacate) puede reducir los calambres y el SPM.',
+  },
+  {
+    icon: '🌡️',
+    color: '#FFF0E8',
+    accent: '#E07845',
+    title: 'Calor terapéutico',
+    body: 'Una bolsa de calor en el abdomen puede aliviar los calambres tan efectivamente como el ibuprofeno.',
+  },
 ]
 
 export const Tips = () => {
@@ -40,6 +70,7 @@ export const Tips = () => {
   const phaseTips = currentPhase ? PHASE_CONFIG[currentPhase].tips : []
   const phaseColor = currentPhase ? PHASE_CONFIG[currentPhase].color : '#FFF3C4'
   const phaseTextColor = currentPhase ? PHASE_CONFIG[currentPhase].textColor : '#8B7000'
+  const phaseLabel = currentPhase ? PHASE_CONFIG[currentPhase].label : ''
 
   return (
     <div className="app-page">
@@ -57,57 +88,65 @@ export const Tips = () => {
         <div style={{ width: 40 }} />
       </div>
 
-      <div className="app-content" style={{ padding: '16px' }}>
-        {/* Phase-specific tips */}
-        {currentPhase && (
+      <div className="app-content tips-content">
+
+        {/* Phase card */}
+        {currentPhase ? (
           <motion.div
             className="tips-phase-card"
             style={{ background: phaseColor }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
+            <div className="tips-phase-eyebrow" style={{ color: phaseTextColor }}>
+              Tu fase actual
+            </div>
             <h2 className="tips-phase-title" style={{ color: phaseTextColor }}>
-              Recomendado para tu fase {PHASE_CONFIG[currentPhase].label}
+              {phaseLabel}
             </h2>
             <ul className="tips-list">
               {phaseTips.map((tip) => (
-                <li key={tip} style={{ color: phaseTextColor }}>{tip}</li>
+                <li key={tip} className="tips-list-item" style={{ color: phaseTextColor }}>
+                  <span className="tips-list-dot" style={{ background: phaseTextColor }} />
+                  {tip}
+                </li>
               ))}
             </ul>
           </motion.div>
+        ) : (
+          <div className="tips-phase-empty" onClick={() => navigate('/settings')}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#FF8C42" strokeWidth="2" />
+              <line x1="12" y1="8" x2="12" y2="12" stroke="#FF8C42" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="12" cy="16" r="1" fill="#FF8C42" />
+            </svg>
+            Configura tu ciclo para ver consejos personalizados →
+          </div>
         )}
 
         {/* General tips */}
-        <h3 className="tips-section-title">Bienestar general</h3>
+        <p className="tips-section-label">Bienestar general</p>
+
         <div className="tips-cards">
           {GENERAL_TIPS.map((tip, i) => (
             <motion.div
               key={tip.title}
               className="tip-card"
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
             >
-              <h4 className="tip-card-title">{tip.title}</h4>
-              <p className="tip-card-body">{tip.body}</p>
+              <div className="tip-card-icon-wrap" style={{ background: tip.color }}>
+                <span className="tip-card-icon">{tip.icon}</span>
+              </div>
+              <div className="tip-card-body-wrap">
+                <h4 className="tip-card-title" style={{ color: tip.accent }}>{tip.title}</h4>
+                <p className="tip-card-body">{tip.body}</p>
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* AI question prompt */}
-        <motion.button
-          className="tips-ask-btn"
-          onClick={() => navigate('/chat')}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          ¿Tienes alguna pregunta?
-          <span style={{ fontSize: 12, opacity: 0.7 }}>Pregúntale a Diana AI →</span>
-        </motion.button>
       </div>
 
       <BottomNav />
