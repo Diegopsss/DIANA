@@ -2,7 +2,7 @@
 
 .app-page {
   min-height: 100dvh;
-  background: #FDF6EE;
+  background: linear-gradient(160deg, #C07868 0%, #C4917E 40%, #B0A898 75%, #9BAD98 100%);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -76,7 +76,7 @@
   align-items: center;
   justify-content: space-around;
   padding: 0 8px;
-  z-index: 200;
+  z-index: 1000;
   width: 90%;
   max-width: 400px;
 }

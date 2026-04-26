@@ -22,6 +22,7 @@ import './styles/components/DailyRecord.css'
 import './styles/components/MedicalRegistry.css'
 import './styles/components/DianaChat.css'
 import './styles/components/Loading.css'
+import './styles/components/PhaseWheel.css'
 
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
   return (
