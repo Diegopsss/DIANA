@@ -634,9 +634,6 @@ export const MedicalRegistry = () => {
               <path d="M19 12H5M12 19l-7-7 7-7" stroke="var(--diana-text)" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
-          <div className="logo-placeholder">
-            {/* Espacio para logo */}
-          </div>
         </div>
         
         <div className="header-right">
@@ -772,7 +769,7 @@ export const MedicalRegistry = () => {
         )}
       </AnimatePresence>
 
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }

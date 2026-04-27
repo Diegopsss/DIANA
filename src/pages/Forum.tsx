@@ -39,12 +39,19 @@ export const Forum = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [posts, setPosts] = useState<ForumPost[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Create / edit sheet
   const [showCreate, setShowCreate] = useState(false)
+  const [editingPost, setEditingPost] = useState<ForumPost | null>(null)
   const [newType, setNewType] = useState<PostType>('consejo')
   const [newTitle, setNewTitle] = useState('')
   const [newContent, setNewContent] = useState('')
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  // Action sheet (edit / delete menu)
+  const [actionPost, setActionPost] = useState<ForumPost | null>(null)
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -70,7 +77,6 @@ export const Forum = () => {
     }
 
     const { data: postsData, error } = await query
-
     if (error) console.error('forum_posts error:', error)
 
     if (!postsData || postsData.length === 0) {
@@ -79,19 +85,26 @@ export const Forum = () => {
       return
     }
 
-    const postIds = postsData.map((p) => p.id)
+    // Get unique user IDs that are NOT anonymous
     const visibleUserIds = [...new Set(
       postsData.filter((p) => !p.is_anonymous).map((p) => p.user_id)
     )]
 
-    const [{ data: likesData }, { data: profilesData }] = await Promise.all([
-      supabase.from('forum_likes').select('post_id, user_id').in('post_id', postIds),
+    const postIds = postsData.map((p) => p.id)
+
+    // Fetch profiles and likes in parallel
+    const [{ data: profilesData }, { data: likesData }] = await Promise.all([
       visibleUserIds.length > 0
         ? supabase.from('profiles').select('id, full_name').in('id', visibleUserIds)
         : Promise.resolve({ data: [] }),
+      supabase.from('forum_likes').select('post_id, user_id').in('post_id', postIds)
     ])
 
-    const profileMap = new Map((profilesData ?? []).map((p) => [p.id, p.full_name]))
+    // Create a map of user_id -> full_name
+    const profileMap = new Map<string, string | null>()
+    profilesData?.forEach((p) => {
+      profileMap.set(p.id, p.full_name)
+    })
 
     const enriched: ForumPost[] = postsData.map((p) => ({
       ...p,
@@ -105,6 +118,8 @@ export const Forum = () => {
   }, [user, activeTab, debouncedSearch])
 
   useEffect(() => { loadPosts() }, [loadPosts])
+
+  // ── Like ──────────────────────────────────────────────────────────────────
 
   const toggleLike = async (postId: string) => {
     if (!user) return
@@ -126,24 +141,85 @@ export const Forum = () => {
     }
   }
 
-  const createPost = async () => {
-    if (!user || !newTitle.trim() || !newContent.trim()) return
-    setSubmitting(true)
-    await supabase.from('forum_posts').insert({
-      user_id: user.id,
-      type: newType,
-      title: newTitle.trim(),
-      content: newContent.trim(),
-      is_anonymous: isAnonymous,
-    })
-    setShowCreate(false)
+  // ── Create / edit sheet ───────────────────────────────────────────────────
+
+  const openCreate = () => {
+    setEditingPost(null)
+    setNewType('consejo')
     setNewTitle('')
     setNewContent('')
     setIsAnonymous(false)
-    setSubmitting(false)
-    setActiveTab(newType)
-    loadPosts()
+    setShowCreate(true)
   }
+
+  const openEdit = (post: ForumPost) => {
+    setActionPost(null)
+    setEditingPost(post)
+    setNewType(post.type)
+    setNewTitle(post.title)
+    setNewContent(post.content)
+    setIsAnonymous(post.is_anonymous)
+    setShowCreate(true)
+  }
+
+  const closeSheet = () => {
+    setShowCreate(false)
+    setEditingPost(null)
+    setNewTitle('')
+    setNewContent('')
+    setIsAnonymous(false)
+  }
+
+  const savePost = async () => {
+    if (!user || !newTitle.trim() || !newContent.trim()) return
+    setSubmitting(true)
+
+    if (editingPost) {
+      await supabase
+        .from('forum_posts')
+        .update({
+          type: newType,
+          title: newTitle.trim(),
+          content: newContent.trim(),
+          is_anonymous: isAnonymous,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', editingPost.id)
+        .eq('user_id', user.id)
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === editingPost.id
+            ? { ...p, type: newType, title: newTitle.trim(), content: newContent.trim(), is_anonymous: isAnonymous }
+            : p
+        )
+      )
+    } else {
+      await supabase.from('forum_posts').insert({
+        user_id: user.id,
+        type: newType,
+        title: newTitle.trim(),
+        content: newContent.trim(),
+        is_anonymous: isAnonymous,
+      })
+      setActiveTab(newType)
+      loadPosts()
+    }
+
+    closeSheet()
+    setSubmitting(false)
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────────────
+
+  const deletePost = async (postId: string) => {
+    if (!user) return
+    setActionPost(null)
+    setPosts((prev) => prev.filter((p) => p.id !== postId))
+    await supabase.from('forum_posts').delete().eq('id', postId).eq('user_id', user.id)
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   const authorName = (post: ForumPost) => {
     if (post.is_anonymous) return 'Anónima'
@@ -234,16 +310,32 @@ export const Forum = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.045 }}
               >
-                <span
-                  className="forum-post-tag"
-                  style={
-                    post.type === 'consejo'
-                      ? { background: '#FFF3E0', color: '#E07845' }
-                      : { background: '#EEE8F8', color: '#8B6DB8' }
-                  }
-                >
-                  {post.type === 'consejo' ? '💡 Consejo' : '💬 Experiencia'}
-                </span>
+                <div className="forum-post-header">
+                  <span
+                    className="forum-post-tag"
+                    style={
+                      post.type === 'consejo'
+                        ? { background: '#FFF3E0', color: '#E07845' }
+                        : { background: '#EEE8F8', color: '#8B6DB8' }
+                    }
+                  >
+                    {post.type === 'consejo' ? '💡 Consejo' : '💬 Experiencia'}
+                  </span>
+
+                  {post.user_id === user?.id && (
+                    <button
+                      className="forum-post-menu-btn"
+                      onClick={() => setActionPost(actionPost?.id === post.id ? null : post)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="5" cy="12" r="1.5" />
+                        <circle cx="12" cy="12" r="1.5" />
+                        <circle cx="19" cy="12" r="1.5" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
                 <h3 className="forum-post-title">{post.title}</h3>
                 <p className="forum-post-content">{post.content}</p>
                 <div className="forum-post-footer">
@@ -277,7 +369,7 @@ export const Forum = () => {
       {/* FAB */}
       <motion.button
         className="forum-fab"
-        onClick={() => setShowCreate(true)}
+        onClick={openCreate}
         whileTap={{ scale: 0.88 }}
         aria-label="Nueva publicación"
       >
@@ -287,7 +379,52 @@ export const Forum = () => {
         </svg>
       </motion.button>
 
-      {/* Create sheet */}
+      {/* Action sheet (edit / delete) */}
+      <AnimatePresence>
+        {actionPost && (
+          <motion.div
+            className="forum-action-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setActionPost(null)}
+          >
+            <motion.div
+              className="forum-action-sheet"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="forum-action-title" onClick={(e) => e.stopPropagation()}>
+                {actionPost.title}
+              </div>
+              <button className="forum-action-btn" onClick={() => openEdit(actionPost)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Editar publicación
+              </button>
+              <button className="forum-action-btn danger" onClick={() => deletePost(actionPost.id)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Eliminar publicación
+              </button>
+              <button className="forum-action-cancel" onClick={() => setActionPost(null)}>
+                Cancelar
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create / edit sheet */}
       <AnimatePresence>
         {showCreate && (
           <motion.div
@@ -295,7 +432,7 @@ export const Forum = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={(e) => { if (e.target === e.currentTarget) setShowCreate(false) }}
+            onClick={(e) => { if (e.target === e.currentTarget) closeSheet() }}
           >
             <motion.div
               className="forum-create-sheet"
@@ -305,7 +442,9 @@ export const Forum = () => {
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             >
               <div className="forum-create-handle" />
-              <h2 className="forum-create-title">Nueva publicación</h2>
+              <h2 className="forum-create-title">
+                {editingPost ? 'Editar publicación' : 'Nueva publicación'}
+              </h2>
 
               <div className="forum-type-selector">
                 <button
@@ -357,10 +496,12 @@ export const Forum = () => {
 
               <button
                 className="forum-submit-btn"
-                onClick={createPost}
+                onClick={savePost}
                 disabled={!newTitle.trim() || !newContent.trim() || submitting}
               >
-                {submitting ? 'Publicando...' : 'Publicar'}
+                {submitting
+                  ? (editingPost ? 'Guardando...' : 'Publicando...')
+                  : (editingPost ? 'Guardar cambios' : 'Publicar')}
               </button>
             </motion.div>
           </motion.div>
