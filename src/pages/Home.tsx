@@ -381,32 +381,31 @@ export const Home = () => {
 
           {/* Forum shortcut section */}
           <div className="home-grid-item home-grid-item-recommendation">
-            <motion.button
-              className="recommendation-card forum-shortcut-card"
-              onClick={() => navigate('/forum')}
-              whileTap={{ scale: 0.98 }}
-              style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', padding: 0, background: 'none' }}
-            >
-              <div className="recommendation-header">
-                <h2 className="recommendation-title">RECOMENDADO</h2>
-                <span className="forum-shortcut-badge">Foro →</span>
+            <div className="diana-section">
+              <div className="diana-section-header">
+                <h2 className="diana-section-title">Foro</h2>
+                <button className="diana-section-action" onClick={() => navigate('/forum')}>
+                  Ver foro →
+                </button>
               </div>
-              {lastForumPost ? (
-                <>
-                  <h3 className="recommendation-subtitle">{lastForumPost.title}</h3>
-                  <p className="recommendation-text">
-                    {lastForumPost.content.length > 100
-                      ? lastForumPost.content.slice(0, 100) + '...'
-                      : lastForumPost.content}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h3 className="recommendation-subtitle">Consejos de la comunidad</h3>
-                  <p className="recommendation-text">Sé la primera en compartir un consejo con la comunidad.</p>
-                </>
-              )}
-            </motion.button>
+              <div className="record-body">
+                {lastForumPost ? (
+                  <>
+                    <h3 className="recommendation-subtitle">{lastForumPost.title}</h3>
+                    <p className="recommendation-text">
+                      {lastForumPost.content.length > 100
+                        ? lastForumPost.content.slice(0, 100) + '...'
+                        : lastForumPost.content}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="recommendation-subtitle">Consejos de la comunidad</h3>
+                    <p className="recommendation-text">Sé la primera en compartir un consejo con la comunidad.</p>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
