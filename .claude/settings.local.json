@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(xxd /Users/diego/Desktop/torrproyectos-y-soluciones/personal/DianaEnviroment/DIANA/.env)"
     ]
   }
 }
