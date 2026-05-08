@@ -7,6 +7,7 @@ import { BottomNav } from '../components/layout/BottomNav'
 import { HamburgerMenu } from '../components/layout/HamburgerMenu'
 import { getCurrentPhaseInfo, PHASE_CONFIG } from '../utils/cycleUtils'
 import type { CyclePhase } from '../utils/cycleUtils'
+import logoHeader from '../assets/images/logo-header.png'
 
 const GENERAL_TIPS = [
   {
@@ -84,7 +85,9 @@ export const Tips = () => {
             <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
-        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>Diana</button>
+        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>
+          <img src={logoHeader} alt="Diana" className="topbar-logo-img" />
+        </button>
         <div style={{ width: 40 }} />
       </div>
 

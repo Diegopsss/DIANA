@@ -154,10 +154,6 @@ export const MedicalRegistry = () => {
       setToastMessage('Información médica guardada exitosamente')
       setShowToast(true)
       
-      setTimeout(() => {
-        navigate('/home')
-      }, 2000)
-      
     } catch (err) {
       console.error('Error:', err)
       setToastMessage('Error inesperado al guardar')
@@ -167,15 +163,27 @@ export const MedicalRegistry = () => {
     }
   }
 
-  const handleSendPDF = () => {
-    setToastMessage('Enviando información médica en PDF a tu correo registrado...')
+  const handleSendPDF = async () => {
+    if (!user) return
+    setToastMessage('Enviando información médica a tu correo...')
     setShowToast(true)
-    
-    // Simulate PDF sending
-    setTimeout(() => {
-      setToastMessage('PDF enviado exitosamente a tu correo')
-      setShowToast(true)
-    }, 2000)
+
+    try {
+      const { error } = await supabase.functions.invoke('send-medical-email', {
+        body: { user_id: user.id, medical_data: formData },
+      })
+
+      if (error) {
+        console.error('Error sending email:', error)
+        setToastMessage('Error al enviar el correo. Intenta de nuevo.')
+      } else {
+        setToastMessage('Información enviada exitosamente a tu correo')
+      }
+    } catch (err) {
+      console.error('Error:', err)
+      setToastMessage('Error inesperado al enviar el correo')
+    }
+    setShowToast(true)
   }
 
   const stepVariants = {

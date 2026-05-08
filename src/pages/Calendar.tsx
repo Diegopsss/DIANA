@@ -5,12 +5,12 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { BottomNav } from '../components/layout/BottomNav'
 import { HamburgerMenu } from '../components/layout/HamburgerMenu'
+import logoHeader from '../assets/images/logo-header.png'
 import {
   getPhaseForDate,
   PHASE_CONFIG,
   MONTHS_ES,
   DAYS_SHORT,
-  dateToString,
   todayString,
 } from '../utils/cycleUtils'
 import type { CyclePhase } from '../utils/cycleUtils'
@@ -87,10 +87,12 @@ export const Calendar = () => {
 
   const toggleEditDay = (day: number) => {
     const ds = getDateStr(day)
-    const d = new Date(editDraft)
-    if (d.has(ds)) d.delete(ds)
-    else d.add(ds)
-    setEditDraft(d)
+    setEditDraft((prev) => {
+      const next = new Set(prev)
+      if (next.has(ds)) next.delete(ds)
+      else next.add(ds)
+      return next
+    })
   }
 
   const saveEdit = async () => {
@@ -98,19 +100,22 @@ export const Calendar = () => {
     const toAdd = [...editDraft].filter((d) => !periodDates.has(d))
     const toRemove = [...periodDates].filter((d) => !editDraft.has(d))
 
-    const ops: Promise<unknown>[] = []
     if (toAdd.length) {
-      ops.push(supabase.from('period_dates').insert(toAdd.map((date) => ({ user_id: user.id, date }))))
+      await supabase.from('period_dates').insert(toAdd.map((date) => ({ user_id: user.id, date })))
     }
     for (const date of toRemove) {
-      ops.push(supabase.from('period_dates').delete().eq('user_id', user.id).eq('date', date))
+      await supabase.from('period_dates').delete().eq('user_id', user.id).eq('date', date)
     }
-    await Promise.all(ops)
 
-    // Update last_period_start to earliest new period date if we added some
-    if (toAdd.length) {
-      const earliest = [...editDraft].sort()[0]
-      await supabase.from('profiles').upsert({ id: user.id, last_period_start: earliest })
+    // Recalculate last_period_start and avg_bleeding_duration from the full draft
+    const allDraftDates = [...editDraft].sort()
+    if (allDraftDates.length > 0) {
+      const earliest = allDraftDates[0]
+      const newBleedingDuration = allDraftDates.length
+      await supabase
+        .from('profiles')
+        .update({ last_period_start: earliest, avg_bleeding_duration: newBleedingDuration })
+        .eq('id', user.id)
     }
 
     setPeriodDates(new Set(editDraft))
@@ -145,7 +150,9 @@ export const Calendar = () => {
             <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
-        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>Diana</button>
+        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>
+          <img src={logoHeader} alt="Diana" className="topbar-logo-img" />
+        </button>
         <div style={{ width: 40 }} />
       </div>
 
@@ -194,7 +201,7 @@ export const Calendar = () => {
                 <motion.button
                   key={day}
                   className={`cal-day${today_ ? ' today' : ''}${isPeriod && !editMode ? ' period' : ''}${isEdit ? ' edit-period' : ''}`}
-                  style={{ background: editMode ? (isEdit ? 'rgba(255,140,66,0.3)' : '#F5F0E8') : phaseColor }}
+                  style={{ background: editMode ? (isEdit ? 'rgba(229, 62, 62, 0.35)' : '#F5F0E8') : phaseColor }}
                   onClick={() => editMode ? toggleEditDay(day) : undefined}
                   whileTap={{ scale: 0.9 }}
                 >

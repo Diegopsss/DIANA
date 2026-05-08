@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PHASE_CONFIG, type CyclePhase } from '../utils/cycleUtils'
+import faseMenstrual from '../assets/images/fase-menstrual.png'
+import faseFolicular from '../assets/images/fase-folicular.png'
+import faseOvulacion from '../assets/images/fase-ovulacion.png'
+import faseLutea from '../assets/images/fase-lutea.png'
+import faseCentral from '../assets/images/fase-central.png'
 
 const PHASE_ORDER: CyclePhase[] = ['menstrual', 'follicular', 'ovulation', 'luteal']
 
@@ -11,44 +16,40 @@ const PHASE_POSITIONS = {
   luteal: { top: '50%', left: '0%' },
 }
 
+const PHASE_IMAGES: Record<CyclePhase, string> = {
+  menstrual: faseMenstrual,
+  follicular: faseFolicular,
+  ovulation: faseOvulacion,
+  luteal: faseLutea,
+}
+
 const PHASE_DETAILS: Record<CyclePhase, {
-  emoji: string;
   state: string;
   shortDesc: string;
   tips: string[];
 }> = {
   menstrual: {
-    emoji: '🌑',
     state: 'Energía baja, introspección',
     shortDesc: 'Descanso, reflexión y renovación',
     tips: ['Descansa y permite que tu cuerpo recupere energía', 'Practica meditación suave', 'Mantén una dieta rica en hierro', 'Evita actividades intensas'],
   },
   follicular: {
-    emoji: '🌒',
     state: 'Energía en aumento',
     shortDesc: 'Momento para nuevos proyectos',
     tips: ['Inicia nuevos proyectos', 'Practica ejercicio moderado', 'Aumenta tu ingesta de proteínas', 'Planifica tus metas'],
   },
   ovulation: {
-    emoji: '🌕',
     state: 'Pico de energía y confianza',
     shortDesc: 'Socializa y lidera con confianza',
     tips: ['Socializa y conecta con otros', 'Acepta nuevos desafíos', 'Practica ejercicio intenso', 'Expresa tu creatividad'],
   },
   luteal: {
-    emoji: '🌖',
     state: 'Energía descendente, preparación',
     shortDesc: 'Organización y cierre de ciclos',
     tips: ['Organiza y planifica', 'Practica yoga suave', 'Reduce el consumo de cafeína', 'Prioriza el autocuidado'],
   },
 }
 
-const YOGA_POSES = [
-  { phase: 'menstrual', pose: '🧘‍♀️' },
-  { phase: 'follicular', pose: '🤸‍♀️' },
-  { phase: 'ovulation', pose: '🏃‍♀️' },
-  { phase: 'luteal', pose: '🧘' },
-]
 
 interface PhaseWheelProps {
   currentPhase?: CyclePhase | null
@@ -76,13 +77,15 @@ export const PhaseWheel = ({ currentPhase }: PhaseWheelProps) => {
           <div className="phase-wheel-center">
             <div className="phase-wheel-sun">
               <div className="phase-wheel-core">
-                {selectedPhase ? PHASE_DETAILS[selectedPhase].emoji : '☀️'}
+                {selectedPhase
+                  ? <img src={PHASE_IMAGES[selectedPhase]} alt={selectedPhase} className="phase-wheel-center-img" />
+                  : <img src={faseCentral} alt="Diana" className="phase-wheel-center-img" />}
               </div>
             </div>
           </div>
 
           {/* Phase positions - absolute positioning */}
-          {PHASE_ORDER.map((phase, index) => {
+          {PHASE_ORDER.map((phase) => {
             const position = PHASE_POSITIONS[phase]
             const cfg = PHASE_CONFIG[phase]
             const isSelected = selectedPhase === phase
@@ -102,7 +105,7 @@ export const PhaseWheel = ({ currentPhase }: PhaseWheelProps) => {
                 onClick={() => handlePhaseClick(phase)}
               >
                 <div className="phase-wheel-icon">
-                  {YOGA_POSES[index].pose}
+                  <img src={PHASE_IMAGES[phase]} alt={cfg.label} className="phase-wheel-item-img" />
                 </div>
                 <span className="phase-wheel-name">{cfg.label}</span>
                 <span className="phase-wheel-desc">{PHASE_DETAILS[phase].shortDesc}</span>
@@ -125,7 +128,7 @@ export const PhaseWheel = ({ currentPhase }: PhaseWheelProps) => {
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                🧘‍♀️
+                <img src={PHASE_IMAGES[selectedPhase]} alt={selectedPhase} style={{ width: 40, height: 40, objectFit: 'contain' }} />
               </motion.div>
             )}
           </AnimatePresence>

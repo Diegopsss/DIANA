@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { BottomNav } from '../components/layout/BottomNav'
 import { HamburgerMenu } from '../components/layout/HamburgerMenu'
+import logoHeader from '../assets/images/logo-header.png'
 import {
   getCurrentPhaseInfo,
   getPhaseForDate,
@@ -31,6 +32,13 @@ interface DailyLog {
   symptoms: string[] | null
   journal_entry: string | null
   mood_rank: string | null
+}
+
+interface LastForumPost {
+  id: string
+  title: string
+  content: string
+  created_at: string
 }
 
 // ──────────────────────────────────────────
@@ -156,12 +164,13 @@ export const Home = () => {
   const [flowLevel, setFlowLevel] = useState('')
   const [symptoms, setSymptoms] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+  const [lastForumPost, setLastForumPost] = useState<LastForumPost | null>(null)
 
   const today = todayString()
 
   const load = useCallback(async () => {
     if (!user) return
-    const [pRes, logRes, recentRes, periodRes] = await Promise.all([
+    const [pRes, logRes, recentRes, periodRes, forumRes] = await Promise.all([
       supabase
         .from('profiles')
         .select('full_name, avg_cycle_duration, avg_bleeding_duration, last_period_start')
@@ -175,6 +184,13 @@ export const Home = () => {
         .order('date', { ascending: false })
         .limit(7),
       supabase.from('period_dates').select('date').eq('user_id', user.id),
+      supabase
+        .from('forum_posts')
+        .select('id, title, content, created_at')
+        .eq('type', 'consejo')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ])
 
     if (pRes.data) setProfile(pRes.data as Profile)
@@ -184,6 +200,7 @@ export const Home = () => {
     }
     if (recentRes.data) setRecentLogs(recentRes.data as DailyLog[])
     if (periodRes.data) setPeriodDates(periodRes.data.map((r: { date: string }) => r.date))
+    if (forumRes.data) setLastForumPost(forumRes.data as LastForumPost)
   }, [user, today])
 
   useEffect(() => { load() }, [load])
@@ -240,7 +257,9 @@ export const Home = () => {
             <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
-        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>Diana</button>
+        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>
+          <img src={logoHeader} alt="Diana" className="topbar-logo-img" />
+        </button>
         <button className="icon-btn" onClick={() => navigate('/settings')} aria-label="Perfil">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
@@ -360,25 +379,34 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* Recommendation section */}
+          {/* Forum shortcut section */}
           <div className="home-grid-item home-grid-item-recommendation">
-            <div className="recommendation-card">
+            <motion.button
+              className="recommendation-card forum-shortcut-card"
+              onClick={() => navigate('/forum')}
+              whileTap={{ scale: 0.98 }}
+              style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', padding: 0, background: 'none' }}
+            >
               <div className="recommendation-header">
                 <h2 className="recommendation-title">RECOMENDADO</h2>
-                <div className="recommendation-illustration">
-                  <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                    <circle cx="30" cy="30" r="28" fill="#F5F0E8" />
-                    <path d="M30 15C25 15 21 19 21 24C21 29 25 33 30 33C35 33 39 29 39 24C39 19 35 15 30 15Z" fill="#D4A574" />
-                    <path d="M20 38C20 38 24 34 30 34C36 34 40 38 40 38" stroke="#D4A574" strokeWidth="2" strokeLinecap="round" />
-                    <path d="M25 26L30 31L35 26" stroke="#8B7355" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
+                <span className="forum-shortcut-badge">Foro →</span>
               </div>
-              <h3 className="recommendation-subtitle">Consejo del día</h3>
-              <p className="recommendation-text">
-                Dedica 10 minutos a la meditación matutina para reducir el estrés y mejorar tu bienestar emocional durante el ciclo.
-              </p>
-            </div>
+              {lastForumPost ? (
+                <>
+                  <h3 className="recommendation-subtitle">{lastForumPost.title}</h3>
+                  <p className="recommendation-text">
+                    {lastForumPost.content.length > 100
+                      ? lastForumPost.content.slice(0, 100) + '...'
+                      : lastForumPost.content}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="recommendation-subtitle">Consejos de la comunidad</h3>
+                  <p className="recommendation-text">Sé la primera en compartir un consejo con la comunidad.</p>
+                </>
+              )}
+            </motion.button>
           </div>
         </div>
       </div>

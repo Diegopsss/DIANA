@@ -4,7 +4,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  SplashScreen, Login, SignUp, ForgotPassword,
+  SplashScreen, Login, SignUp, ForgotPassword, ResetPassword,
   Home, Calendar, Phases, Diary, Tips, Forum, Settings,
   DailyRecord, MedicalRegistry, Policies,
 } from './pages'
@@ -47,6 +47,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/policies" element={<Policies />} />
         <Route path="/home" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><PageTransition><Calendar /></PageTransition></ProtectedRoute>} />

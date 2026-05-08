@@ -31,14 +31,20 @@
 }
 
 .diana-topbar-logo {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 22px;
-  color: #2A1A0E;
-  letter-spacing: -0.5px;
   background: none;
   border: none;
   cursor: pointer;
   padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-logo-img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .icon-btn {

@@ -5,8 +5,22 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { BottomNav } from '../components/layout/BottomNav'
 import { HamburgerMenu } from '../components/layout/HamburgerMenu'
+import logoHeader from '../assets/images/logo-header.png'
 
 type PostType = 'consejo' | 'experiencia'
+
+// Admin user IDs – add IDs here to grant admin delete access
+const ADMIN_IDS: string[] = []
+
+interface ForumReply {
+  id: string
+  post_id: string
+  user_id: string
+  content: string
+  is_anonymous: boolean
+  created_at: string
+  profiles: { full_name: string | null } | null
+}
 
 interface ForumPost {
   id: string
@@ -51,6 +65,16 @@ export const Forum = () => {
 
   // Action sheet (edit / delete menu)
   const [actionPost, setActionPost] = useState<ForumPost | null>(null)
+
+  // Reply state
+  const [replyPost, setReplyPost] = useState<ForumPost | null>(null)
+  const [replies, setReplies] = useState<ForumReply[]>([])
+  const [loadingReplies, setLoadingReplies] = useState(false)
+  const [replyContent, setReplyContent] = useState('')
+  const [replyAnonymous, setReplyAnonymous] = useState(false)
+  const [submittingReply, setSubmittingReply] = useState(false)
+
+  const isAdmin = !!user && ADMIN_IDS.includes(user.id)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -212,11 +236,69 @@ export const Forum = () => {
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
-  const deletePost = async (postId: string) => {
+  const deletePost = async (postId: string, postUserId: string) => {
     if (!user) return
     setActionPost(null)
     setPosts((prev) => prev.filter((p) => p.id !== postId))
-    await supabase.from('forum_posts').delete().eq('id', postId).eq('user_id', user.id)
+    // Admin can delete any post; owner can only delete their own
+    if (isAdmin || postUserId === user.id) {
+      let query = supabase.from('forum_posts').delete().eq('id', postId)
+      if (!isAdmin) query = query.eq('user_id', user.id)
+      await query
+    }
+  }
+
+  // ── Replies ───────────────────────────────────────────────────────────────
+
+  const openReplies = async (post: ForumPost) => {
+    setReplyPost(post)
+    setReplyContent('')
+    setReplyAnonymous(false)
+    setLoadingReplies(true)
+    const { data } = await supabase
+      .from('forum_replies')
+      .select('id, post_id, user_id, content, is_anonymous, created_at')
+      .eq('post_id', post.id)
+      .order('created_at', { ascending: true })
+    if (data && data.length > 0) {
+      const visibleIds = [...new Set(data.filter((r) => !r.is_anonymous).map((r) => r.user_id))]
+      const { data: profilesData } = visibleIds.length > 0
+        ? await supabase.from('profiles').select('id, full_name').in('id', visibleIds)
+        : { data: [] }
+      const profileMap = new Map<string, string | null>()
+      profilesData?.forEach((p) => profileMap.set(p.id, p.full_name))
+      setReplies(data.map((r) => ({ ...r, profiles: { full_name: profileMap.get(r.user_id) ?? null } })))
+    } else {
+      setReplies([])
+    }
+    setLoadingReplies(false)
+  }
+
+  const closeReplies = () => {
+    setReplyPost(null)
+    setReplies([])
+    setReplyContent('')
+  }
+
+  const submitReply = async () => {
+    if (!user || !replyPost || !replyContent.trim()) return
+    setSubmittingReply(true)
+    const { data } = await supabase
+      .from('forum_replies')
+      .insert({ post_id: replyPost.id, user_id: user.id, content: replyContent.trim(), is_anonymous: replyAnonymous })
+      .select('id, post_id, user_id, content, is_anonymous, created_at')
+      .single()
+    if (data) {
+      setReplies((prev) => [...prev, { ...data, profiles: { full_name: replyAnonymous ? null : (user as { email?: string }).email ?? null } }])
+    }
+    setReplyContent('')
+    setSubmittingReply(false)
+  }
+
+  const replyAuthorName = (reply: ForumReply) => {
+    if (reply.is_anonymous) return 'Anónima'
+    if (reply.user_id === user?.id) return 'Tú'
+    return reply.profiles?.full_name || 'Usuaria'
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -239,7 +321,9 @@ export const Forum = () => {
             <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
-        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>Diana</button>
+        <button className="diana-topbar-logo" onClick={() => navigate('/home')}>
+          <img src={logoHeader} alt="Diana" className="topbar-logo-img" />
+        </button>
         <div style={{ width: 40 }} />
       </div>
 
@@ -322,7 +406,7 @@ export const Forum = () => {
                     {post.type === 'consejo' ? '💡 Consejo' : '💬 Experiencia'}
                   </span>
 
-                  {post.user_id === user?.id && (
+                  {(post.user_id === user?.id || isAdmin) && (
                     <button
                       className="forum-post-menu-btn"
                       onClick={() => setActionPost(actionPost?.id === post.id ? null : post)}
@@ -342,22 +426,36 @@ export const Forum = () => {
                   <span className="forum-post-meta">
                     {authorName(post)} · {timeAgo(post.created_at)}
                   </span>
-                  <motion.button
-                    className={`forum-like-btn${post.likedByMe ? ' liked' : ''}`}
-                    onClick={() => toggleLike(post.id)}
-                    whileTap={{ scale: 0.82 }}
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill={post.likedByMe ? 'currentColor' : 'none'}>
-                      <path
-                        d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {post.likesCount > 0 && <span>{post.likesCount}</span>}
-                  </motion.button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {post.type === 'experiencia' && (
+                      <button
+                        className="forum-reply-btn"
+                        onClick={() => openReplies(post)}
+                        title="Ver respuestas"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <span>Responder</span>
+                      </button>
+                    )}
+                    <motion.button
+                      className={`forum-like-btn${post.likedByMe ? ' liked' : ''}`}
+                      onClick={() => toggleLike(post.id)}
+                      whileTap={{ scale: 0.82 }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill={post.likedByMe ? 'currentColor' : 'none'}>
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {post.likesCount > 0 && <span>{post.likesCount}</span>}
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -400,19 +498,20 @@ export const Forum = () => {
               <div className="forum-action-title" onClick={(e) => e.stopPropagation()}>
                 {actionPost.title}
               </div>
-              <button className="forum-action-btn" onClick={() => openEdit(actionPost)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Editar publicación
-              </button>
-              <button className="forum-action-btn danger" onClick={() => deletePost(actionPost.id)}>
+              {actionPost.user_id === user?.id && (
+                <button className="forum-action-btn" onClick={() => openEdit(actionPost)}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Editar publicación
+                </button>
+              )}
+              <button className="forum-action-btn danger" onClick={() => deletePost(actionPost.id, actionPost.user_id)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 Eliminar publicación
               </button>
@@ -503,6 +602,78 @@ export const Forum = () => {
                   ? (editingPost ? 'Guardando...' : 'Publicando...')
                   : (editingPost ? 'Guardar cambios' : 'Publicar')}
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Replies panel */}
+      <AnimatePresence>
+        {replyPost && (
+          <motion.div
+            className="forum-create-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => { if (e.target === e.currentTarget) closeReplies() }}
+          >
+            <motion.div
+              className="forum-create-sheet forum-replies-sheet"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            >
+              <div className="forum-create-handle" />
+              <h2 className="forum-create-title" style={{ fontSize: 15 }}>{replyPost.title}</h2>
+              <p className="forum-replies-original">{replyPost.content}</p>
+
+              <div className="forum-replies-list">
+                {loadingReplies ? (
+                  <div className="forum-skeletons">
+                    {[1, 2].map((i) => <div key={i} className="forum-skeleton" style={{ height: 56 }} />)}
+                  </div>
+                ) : replies.length === 0 ? (
+                  <p className="forum-replies-empty">Aún no hay respuestas. ¡Sé la primera!</p>
+                ) : (
+                  replies.map((reply) => (
+                    <div key={reply.id} className="forum-reply-item">
+                      <span className="forum-reply-author">{replyAuthorName(reply)}</span>
+                      <span className="forum-reply-time"> · {timeAgo(reply.created_at)}</span>
+                      <p className="forum-reply-content">{reply.content}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="forum-reply-compose">
+                <textarea
+                  className="forum-textarea"
+                  placeholder="Escribe tu respuesta..."
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                />
+                <div className="forum-anon-row" style={{ marginBottom: 8 }}>
+                  <div>
+                    <div className="forum-anon-label">Responder como anónima</div>
+                  </div>
+                  <button
+                    className={`forum-toggle${replyAnonymous ? ' on' : ''}`}
+                    onClick={() => setReplyAnonymous((v) => !v)}
+                  >
+                    <div className="forum-toggle-knob" />
+                  </button>
+                </div>
+                <button
+                  className="forum-submit-btn"
+                  onClick={submitReply}
+                  disabled={!replyContent.trim() || submittingReply}
+                >
+                  {submittingReply ? 'Enviando...' : 'Enviar respuesta'}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
