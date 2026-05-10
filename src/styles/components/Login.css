@@ -1,7 +1,7 @@
 /* ===== AUTH PAGES ===== */
 
 .auth-page {
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
   display: flex;
   align-items: stretch;
@@ -53,16 +53,11 @@
 }
 
 .auth-brand-logo {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 24px;
+  width: 120px;
+  height: auto;
   margin: 0 auto 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: block;
+  object-fit: contain;
 }
 
 .auth-brand-name {
@@ -92,7 +87,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 64px 56px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 /* ===== HEADER ===== */
@@ -365,54 +360,62 @@
 @media (max-width: 768px) {
   .auth-page {
     flex-direction: column;
-    overflow: auto;
-    min-height: 100dvh;
+    overflow: hidden;
+    height: 100dvh;
   }
 
   .auth-brand {
     flex: 0 0 auto;
-    padding: 44px 24px 52px;
+    padding: 28px 24px 32px;
     border-radius: 0 0 28px 28px;
   }
 
   .auth-brand-logo {
-    width: 60px;
-    height: 60px;
-    border-radius: 16px;
-    margin-bottom: 20px;
+    width: 80px;
+    margin-bottom: 14px;
   }
 
   .auth-brand-name {
-    font-size: 38px;
-    margin-bottom: 10px;
+    font-size: 34px;
+    margin-bottom: 8px;
   }
 
   .auth-brand-tagline {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .auth-panel {
     max-width: 100%;
-    padding: 40px 24px 56px;
+    padding: 28px 24px 32px;
     flex: 1;
-    justify-content: flex-start;
+    justify-content: center;
+    overflow: hidden;
   }
 
   .auth-title {
-    font-size: 30px;
+    font-size: 28px;
+  }
+
+  .auth-subtitle {
+    margin-bottom: 24px;
   }
 
   .auth-back-btn {
-    margin-bottom: 28px;
+    margin-bottom: 20px;
+  }
+
+  .auth-footer {
+    margin-top: 18px;
+    gap: 10px;
   }
 }
 
 @media (max-width: 400px) {
   .auth-panel {
-    padding: 32px 20px 48px;
+    padding: 20px 20px 24px;
   }
 
   .auth-title {
-    font-size: 26px;
+    font-size: 24px;
   }
 }

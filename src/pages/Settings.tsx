@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
+import { DateInput } from '../components/DateInput'
 
 interface ProfileForm {
   full_name: string
@@ -215,11 +216,10 @@ export const Settings = () => {
           </Field>
 
           <Field icon={<CalendarIcon />} label="Fecha de nacimiento">
-            <input
+            <DateInput
               className="settings-input"
-              type="date"
               value={form.birth_date}
-              onChange={(e) => set('birth_date', e.target.value)}
+              onChange={(v) => set('birth_date', v)}
             />
           </Field>
 
@@ -302,11 +302,10 @@ export const Settings = () => {
           </Field>
 
           <Field icon={<LastPeriodIcon />} label="Inicio de tu último periodo" last>
-            <input
+            <DateInput
               className="settings-input"
-              type="date"
               value={form.last_period_start}
-              onChange={(e) => set('last_period_start', e.target.value)}
+              onChange={(v) => set('last_period_start', v)}
             />
           </Field>
         </div>

@@ -190,3 +190,53 @@ code {
 .diana-flow-selector.inactive:hover {
   background-color: #DEB887;
 }
+
+/* ===== DATE INPUT COMPONENT ===== */
+
+.date-input-group {
+  display: flex !important;
+  align-items: center;
+  gap: 2px;
+  cursor: text;
+}
+
+.date-input-group .date-part {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  width: 2em;
+  text-align: center;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+
+.date-input-group .date-part.date-year {
+  width: 3.6em;
+}
+
+.date-input-group .date-part::placeholder {
+  color: #C4B49E;
+}
+
+.date-input-group .date-sep {
+  color: #C4B49E;
+  flex-shrink: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+.settings-input.date-input-group:focus-within {
+  border-color: #FF8C42;
+  box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.12);
+}
+
+.form-input.date-input-group:focus-within {
+  border-color: var(--diana-orange);
+  box-shadow: 0 0 0 4px rgba(255, 140, 66, 0.12), 0 4px 12px rgba(255, 140, 66, 0.15);
+}

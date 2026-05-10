@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
+import { DateInput } from '../components/DateInput'
 
 interface MedicalHistory {
   id?: string
@@ -240,11 +241,10 @@ export const MedicalRegistry = () => {
             <label className="form-label" style={{ color: 'var(--diana-text)' }}>
               Fecha de Nacimiento
             </label>
-            <input
-              type="date"
+            <DateInput
               className="form-input"
               value={formData.personal_data.birth_date}
-              onChange={(e) => handleInputChange('personal_data', 'birth_date', e.target.value)}
+              onChange={(v) => handleInputChange('personal_data', 'birth_date', v)}
             />
           </div>
           
@@ -518,11 +518,10 @@ export const MedicalRegistry = () => {
             <label className="form-label" style={{ color: 'var(--diana-text)' }}>
               Último Papanicolaou
             </label>
-            <input
-              type="date"
+            <DateInput
               className="form-input"
               value={formData.menstrual_history.last_pap_smear}
-              onChange={(e) => handleInputChange('menstrual_history', 'last_pap_smear', e.target.value)}
+              onChange={(v) => handleInputChange('menstrual_history', 'last_pap_smear', v)}
             />
           </div>
           
@@ -530,11 +529,10 @@ export const MedicalRegistry = () => {
             <label className="form-label" style={{ color: 'var(--diana-text)' }}>
               Última Ultrasonido
             </label>
-            <input
-              type="date"
+            <DateInput
               className="form-input"
               value={formData.menstrual_history.last_ultrasound}
-              onChange={(e) => handleInputChange('menstrual_history', 'last_ultrasound', e.target.value)}
+              onChange={(v) => handleInputChange('menstrual_history', 'last_ultrasound', v)}
             />
           </div>
         </div>
