@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { BottomNav } from '../components/layout/BottomNav'
@@ -12,10 +12,8 @@ import {
   PHASE_CONFIG,
   FLOW_LEVELS,
   SYMPTOMS,
-  MOODS,
   MONTHS_ES,
   DAYS_SHORT,
-  dateToString,
   todayString,
 } from '../utils/cycleUtils'
 
@@ -65,9 +63,8 @@ const MiniCalendar = ({
 
   const getDayStyle = (day: number): React.CSSProperties => {
     if (!profile?.last_period_start) return {}
-    const date = new Date(year, month, day)
     const phase = getPhaseForDate(
-      date,
+      new Date(year, month, day),
       profile.last_period_start,
       profile.avg_cycle_duration,
       profile.avg_bleeding_duration
@@ -132,13 +129,11 @@ const FlowDrop = ({ filled, size = 32, onClick }: { filled: boolean; size?: numb
 // ──────────────────────────────────────────
 const SymptomPill = ({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) => {
   const [shaking, setShaking] = useState(false)
-
   const handle = () => {
     onToggle()
     setShaking(true)
     setTimeout(() => setShaking(false), 420)
   }
-
   return (
     <motion.button
       className={`symptom-pill${active ? ' active' : ''}`}
@@ -165,45 +160,75 @@ export const Home = () => {
   const [symptoms, setSymptoms] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [lastForumPost, setLastForumPost] = useState<LastForumPost | null>(null)
+  const [showSetupModal, setShowSetupModal] = useState(false)
+  const [showSetupToast, setShowSetupToast] = useState(false)
+  const [showPhaseToast, setShowPhaseToast] = useState(false)
+  const hasShownModal = useRef(false)
+  const hasShownPhaseToast = useRef(false)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const phaseToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const today = todayString()
 
   const load = useCallback(async () => {
     if (!user) return
     const [pRes, logRes, recentRes, periodRes, forumRes] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('full_name, avg_cycle_duration, avg_bleeding_duration, last_period_start')
-        .eq('id', user.id)
-        .maybeSingle(),
+      supabase.from('profiles').select('full_name, avg_cycle_duration, avg_bleeding_duration, last_period_start').eq('id', user.id).maybeSingle(),
       supabase.from('daily_logs').select('*').eq('user_id', user.id).eq('date', today).maybeSingle(),
-      supabase
-        .from('daily_logs')
-        .select('date, journal_entry, mood_rank')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(7),
+      supabase.from('daily_logs').select('date, journal_entry, mood_rank').eq('user_id', user.id).order('date', { ascending: false }).limit(7),
       supabase.from('period_dates').select('date').eq('user_id', user.id),
-      supabase
-        .from('forum_posts')
-        .select('id, title, content, created_at')
-        .eq('type', 'consejo')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      supabase.from('forum_posts').select('id, title, content, created_at').eq('type', 'consejo').order('created_at', { ascending: false }).limit(1).maybeSingle(),
     ])
-
     if (pRes.data) setProfile(pRes.data as Profile)
-    if (logRes.data) {
-      setFlowLevel(logRes.data.flow_level || '')
-      setSymptoms(logRes.data.symptoms || [])
-    }
+    if (logRes.data) { setFlowLevel(logRes.data.flow_level || ''); setSymptoms(logRes.data.symptoms || []) }
     if (recentRes.data) setRecentLogs(recentRes.data as DailyLog[])
     if (periodRes.data) setPeriodDates(periodRes.data.map((r: { date: string }) => r.date))
     if (forumRes.data) setLastForumPost(forumRes.data as LastForumPost)
   }, [user, today])
 
   useEffect(() => { load() }, [load])
+
+  // Show setup modal once when profile loads without cycle data
+  useEffect(() => {
+    if (!hasShownModal.current && profile !== null && !profile.last_period_start) {
+      hasShownModal.current = true
+      const t = setTimeout(() => setShowSetupModal(true), 800)
+      return () => clearTimeout(t)
+    }
+  }, [profile])
+
+  // Show phase toast once per load when phaseInfo is available
+  const phaseInfo = profile?.last_period_start
+    ? getCurrentPhaseInfo(profile.last_period_start, profile.avg_cycle_duration, profile.avg_bleeding_duration)
+    : null
+
+  useEffect(() => {
+    if (!hasShownPhaseToast.current && phaseInfo) {
+      hasShownPhaseToast.current = true
+      const t = setTimeout(() => {
+        setShowPhaseToast(true)
+        phaseToastTimer.current = setTimeout(() => setShowPhaseToast(false), 5000)
+      }, 600)
+      return () => clearTimeout(t)
+    }
+  }, [phaseInfo])
+
+  const dismissModal = () => {
+    setShowSetupModal(false)
+    setShowSetupToast(true)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setShowSetupToast(false), 5000)
+  }
+
+  const goToSettings = () => {
+    setShowSetupModal(false)
+    navigate('/settings')
+  }
+
+  const dismissToast = () => {
+    setShowSetupToast(false)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+  }
 
   const saveRecord = async (flow: string, syms: string[]) => {
     if (!user) return
@@ -227,10 +252,6 @@ export const Home = () => {
     saveRecord(flowLevel, next)
   }
 
-  const phaseInfo = profile?.last_period_start
-    ? getCurrentPhaseInfo(profile.last_period_start, profile.avg_cycle_duration, profile.avg_bleeding_duration)
-    : null
-
   const flowIndex = FLOW_LEVELS.findIndex((f) => f.id === flowLevel)
 
   const firstSentence = (text: string | null) => {
@@ -247,6 +268,66 @@ export const Home = () => {
   return (
     <div className="home-page">
       <HamburgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Setup modal */}
+      <AnimatePresence>
+        {showSetupModal && (
+          <>
+            <motion.div
+              className="setup-modal-overlay"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={dismissModal}
+            />
+            <motion.div
+              className="setup-modal"
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+            >
+              <button className="setup-modal-close" onClick={dismissModal}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              </button>
+              <div className="setup-modal-icon">🌸</div>
+              <h3 className="setup-modal-title">¡Configura tu ciclo!</h3>
+              <p className="setup-modal-text">
+                Para ver predicciones de fases, tu período próximo y recomendaciones personalizadas, necesitamos algunos datos de tu ciclo.
+              </p>
+              <button className="setup-modal-primary" onClick={goToSettings}>
+                Configurar ahora
+              </button>
+              <button className="setup-modal-secondary" onClick={dismissModal}>
+                Más tarde
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Setup toast */}
+      <AnimatePresence>
+        {showSetupToast && (
+          <motion.div
+            className="setup-toast"
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.95 }}
+            transition={{ duration: 0.22 }}
+          >
+            <span className="setup-toast-icon">⚙️</span>
+            <button className="setup-toast-text" onClick={() => { dismissToast(); navigate('/settings') }}>
+              Configura tu ciclo
+            </button>
+            <button className="setup-toast-close" onClick={dismissToast}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Top bar */}
       <div className="diana-topbar">
@@ -268,52 +349,41 @@ export const Home = () => {
         </button>
       </div>
 
-      <div className="home-content">
-        {/* Phase banner */}
-        {phaseInfo && (
+      {/* Phase toast – fixed bottom-right */}
+      <AnimatePresence>
+        {showPhaseToast && phaseInfo && (
           <motion.div
-            className="phase-banner"
-            style={{ background: PHASE_CONFIG[phaseInfo.phase].color }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            className="phase-toast"
+            style={{ '--phase-color': PHASE_CONFIG[phaseInfo.phase].color, '--phase-text': PHASE_CONFIG[phaseInfo.phase].textColor } as React.CSSProperties}
+            initial={{ opacity: 0, y: 24, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.94 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 28 }}
           >
-            <div>
-              <div className="phase-banner-label" style={{ color: PHASE_CONFIG[phaseInfo.phase].textColor }}>
-                {PHASE_CONFIG[phaseInfo.phase].label}
-              </div>
-              <div className="phase-banner-sub" style={{ color: PHASE_CONFIG[phaseInfo.phase].textColor }}>
-                Día {phaseInfo.cycleDay} de tu ciclo
-              </div>
+            <div className="phase-toast-dot" />
+            <div className="phase-toast-body">
+              <span className="phase-toast-label">{PHASE_CONFIG[phaseInfo.phase].label}</span>
+              <span className="phase-toast-sub">Día {phaseInfo.cycleDay} de tu ciclo</span>
             </div>
-            <button
-              className="phase-banner-btn"
-              style={{ borderColor: PHASE_CONFIG[phaseInfo.phase].textColor, color: PHASE_CONFIG[phaseInfo.phase].textColor }}
-              onClick={() => navigate('/phases')}
-            >
-              Ver fases
+            <button className="phase-toast-cta" onClick={() => { setShowPhaseToast(false); navigate('/phases') }}>
+              Ver
+            </button>
+            <button className="phase-toast-close" onClick={() => setShowPhaseToast(false)}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
             </button>
           </motion.div>
         )}
+      </AnimatePresence>
 
-        {!profile?.last_period_start && (
-          <div className="setup-prompt" onClick={() => navigate('/settings')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#FF8C42" strokeWidth="2" />
-              <line x1="12" y1="8" x2="12" y2="12" stroke="#FF8C42" strokeWidth="2" strokeLinecap="round" />
-              <circle cx="12" cy="16" r="1" fill="#FF8C42" />
-            </svg>
-            Configura tu ciclo en Ajustes para ver predicciones
-          </div>
-        )}
-
+      <div className="home-content">
         {/* Grid layout */}
         <div className="home-grid">
-          {/* Calendar section */}
           <div className="home-grid-item home-grid-item-calendar">
             <MiniCalendar profile={profile} periodDates={periodDates} onClick={() => navigate('/calendar')} />
           </div>
 
-          {/* Diary section */}
           <div className="home-grid-item home-grid-item-diary">
             <div className="diana-section diary-checklist-section">
               <div className="diary-checklist-header">
@@ -324,9 +394,7 @@ export const Home = () => {
               </div>
               <div className="diary-checklist">
                 {recentLogs.length === 0 ? (
-                  <div className="diary-empty">
-                    Aún no hay entradas. ¡Empieza a escribir hoy!
-                  </div>
+                  <div className="diary-empty">Aún no hay entradas. ¡Empieza a escribir hoy!</div>
                 ) : (
                   recentLogs.slice(0, 7).map((log) => (
                     <motion.button
@@ -347,28 +415,22 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* Record section */}
           <div className="home-grid-item home-grid-item-record">
             <div className="diana-section">
               <div className="diana-section-header">
                 <h2 className="diana-section-title">Récord</h2>
                 {saving && <span className="saving-dot">Guardando</span>}
               </div>
-
               <div className="record-body">
                 <div className="record-label">Flujo</div>
                 <div className="flow-drops-row">
                   {FLOW_LEVELS.map((f, idx) => (
                     <div key={f.id} className="flow-drop-item">
-                      <FlowDrop
-                        filled={flowIndex >= 0 && idx <= flowIndex}
-                        onClick={() => handleFlow(f.id)}
-                      />
+                      <FlowDrop filled={flowIndex >= 0 && idx <= flowIndex} onClick={() => handleFlow(f.id)} />
                       <span className="flow-drop-label">{f.label}</span>
                     </div>
                   ))}
                 </div>
-
                 <div className="record-label" style={{ marginTop: 20 }}>Síntomas</div>
                 <div className="symptoms-grid">
                   {SYMPTOMS.map((s) => (
@@ -379,20 +441,20 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* Forum shortcut section */}
+          {/* Forum card */}
           <div className="home-grid-item home-grid-item-recommendation">
-            <div className="diana-section">
-              <div className="diana-section-header">
-                <h2 className="diana-section-title">Foro</h2>
+            <div className="forum-card">
+              <div className="forum-card-header">
+                <span className="forum-card-eyebrow">Comunidad</span>
                 <button className="diana-section-action" onClick={() => navigate('/forum')}>
                   Ver foro →
                 </button>
               </div>
-              <div className="record-body">
+              <div className="forum-card-body">
                 {lastForumPost ? (
                   <>
-                    <h3 className="recommendation-subtitle">{lastForumPost.title}</h3>
-                    <p className="recommendation-text">
+                    <p className="forum-card-title">{lastForumPost.title}</p>
+                    <p className="forum-card-text">
                       {lastForumPost.content.length > 100
                         ? lastForumPost.content.slice(0, 100) + '...'
                         : lastForumPost.content}
@@ -400,10 +462,13 @@ export const Home = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="recommendation-subtitle">Consejos de la comunidad</h3>
-                    <p className="recommendation-text">Sé la primera en compartir un consejo con la comunidad.</p>
+                    <p className="forum-card-title">Consejos de la comunidad</p>
+                    <p className="forum-card-text">Sé la primera en compartir un consejo con la comunidad.</p>
                   </>
                 )}
+                <button className="forum-card-btn" onClick={() => navigate('/forum')}>
+                  Ir al foro →
+                </button>
               </div>
             </div>
           </div>

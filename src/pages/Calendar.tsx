@@ -8,6 +8,7 @@ import { HamburgerMenu } from '../components/layout/HamburgerMenu'
 import logoHeader from '../assets/images/logo-header.png'
 import {
   getPhaseForDate,
+  calculateCycleDay,
   PHASE_CONFIG,
   MONTHS_ES,
   DAYS_SHORT,
@@ -38,6 +39,8 @@ export const Calendar = () => {
   const [editMode, setEditMode] = useState(false)
   const [editDraft, setEditDraft] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [monthDir, setMonthDir] = useState<1 | -1>(1)
 
   const todayStr = todayString()
   const todayDate = new Date()
@@ -59,10 +62,12 @@ export const Calendar = () => {
   useEffect(() => { load() }, [load])
 
   const prevMonth = () => {
+    setMonthDir(-1); setSelectedDay(null)
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
     else setViewMonth(m => m - 1)
   }
   const nextMonth = () => {
+    setMonthDir(1); setSelectedDay(null)
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
     else setViewMonth(m => m + 1)
   }
@@ -72,52 +77,40 @@ export const Calendar = () => {
 
   const getDayPhase = (day: number): CyclePhase | null => {
     if (!profile?.last_period_start) return null
-    const date = new Date(viewYear, viewMonth, day)
-    return getPhaseForDate(date, profile.last_period_start, profile.avg_cycle_duration, profile.avg_bleeding_duration)
+    return getPhaseForDate(new Date(viewYear, viewMonth, day), profile.last_period_start, profile.avg_cycle_duration, profile.avg_bleeding_duration)
   }
 
   const isToday = (day: number) => getDateStr(day) === todayStr
   const isCurrentViewMonth = viewMonth === todayDate.getMonth() && viewYear === todayDate.getFullYear()
 
-  // Edit mode handlers
-  const openEdit = () => {
-    setEditDraft(new Set(periodDates))
-    setEditMode(true)
-  }
+  const cycleDay = profile?.last_period_start
+    ? calculateCycleDay(profile.last_period_start, profile.avg_cycle_duration)
+    : null
+  const daysUntilPeriod = cycleDay !== null && profile
+    ? Math.max(0, profile.avg_cycle_duration - cycleDay)
+    : null
+
+  const openEdit = () => { setEditDraft(new Set(periodDates)); setEditMode(true); setSelectedDay(null) }
 
   const toggleEditDay = (day: number) => {
     const ds = getDateStr(day)
-    setEditDraft((prev) => {
+    setEditDraft(prev => {
       const next = new Set(prev)
-      if (next.has(ds)) next.delete(ds)
-      else next.add(ds)
+      next.has(ds) ? next.delete(ds) : next.add(ds)
       return next
     })
   }
 
   const saveEdit = async () => {
     if (!user) return
-    const toAdd = [...editDraft].filter((d) => !periodDates.has(d))
-    const toRemove = [...periodDates].filter((d) => !editDraft.has(d))
-
-    if (toAdd.length) {
-      await supabase.from('period_dates').insert(toAdd.map((date) => ({ user_id: user.id, date })))
-    }
-    for (const date of toRemove) {
-      await supabase.from('period_dates').delete().eq('user_id', user.id).eq('date', date)
-    }
-
-    // Recalculate last_period_start and avg_bleeding_duration from the full draft
+    const toAdd = [...editDraft].filter(d => !periodDates.has(d))
+    const toRemove = [...periodDates].filter(d => !editDraft.has(d))
+    if (toAdd.length) await supabase.from('period_dates').insert(toAdd.map(date => ({ user_id: user.id, date })))
+    for (const date of toRemove) await supabase.from('period_dates').delete().eq('user_id', user.id).eq('date', date)
     const allDraftDates = [...editDraft].sort()
     if (allDraftDates.length > 0) {
-      const earliest = allDraftDates[0]
-      const newBleedingDuration = allDraftDates.length
-      await supabase
-        .from('profiles')
-        .update({ last_period_start: earliest, avg_bleeding_duration: newBleedingDuration })
-        .eq('id', user.id)
+      await supabase.from('profiles').update({ last_period_start: allDraftDates[0], avg_bleeding_duration: allDraftDates.length }).eq('id', user.id)
     }
-
     setPeriodDates(new Set(editDraft))
     setEditMode(false)
     load()
@@ -125,15 +118,14 @@ export const Calendar = () => {
 
   const firstDow = new Date(viewYear, viewMonth, 1).getDay()
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
-
-  const currentPhase = isCurrentViewMonth && profile?.last_period_start
-    ? getDayPhase(todayDate.getDate())
-    : null
+  const currentPhase = isCurrentViewMonth && profile?.last_period_start ? getDayPhase(todayDate.getDate()) : null
+  const selectedPhase = selectedDay ? getDayPhase(selectedDay) : null
+  const monthKey = `${viewYear}-${viewMonth}`
 
   if (loading) {
     return (
       <div className="app-page" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#9B8B72', fontSize: 15 }}>Cargando...</div>
+        <div style={{ color: '#9B8B72', fontSize: 14 }}>Cargando...</div>
       </div>
     )
   }
@@ -157,106 +149,209 @@ export const Calendar = () => {
       </div>
 
       <div className="app-content">
-        {/* Month nav */}
-        <div className="cal-month-nav">
-          <button className="icon-btn" onClick={prevMonth}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-          <span className="cal-month-label">{MONTHS_ES[viewMonth]} {viewYear}</span>
-          <button className="icon-btn" onClick={nextMonth}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
 
-        {/* Phase legend */}
-        <div className="cal-legend">
-          {(Object.entries(PHASE_CONFIG) as [CyclePhase, typeof PHASE_CONFIG[CyclePhase]][]).map(([phase, cfg]) => (
-            <div key={phase} className="cal-legend-item">
-              <span className="cal-legend-dot" style={{ background: cfg.color, border: `1.5px solid ${cfg.textColor}` }} />
-              <span className="cal-legend-label">{cfg.label}</span>
+        {/* Phase banner */}
+        {isCurrentViewMonth && currentPhase && (
+          <motion.div
+            className="phase-banner"
+            style={{ background: PHASE_CONFIG[currentPhase].color }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div>
+              <div className="phase-banner-label" style={{ color: PHASE_CONFIG[currentPhase].textColor }}>
+                {PHASE_CONFIG[currentPhase].label}
+              </div>
+              <div className="phase-banner-sub" style={{ color: PHASE_CONFIG[currentPhase].textColor }}>
+                {cycleDay !== null ? `Día ${cycleDay} de tu ciclo` : ''}
+                {daysUntilPeriod !== null && daysUntilPeriod > 0 ? ` · ${daysUntilPeriod} días para el período` : ''}
+              </div>
             </div>
-          ))}
-        </div>
+            <button
+              className="phase-banner-btn"
+              style={{ borderColor: PHASE_CONFIG[currentPhase].textColor, color: PHASE_CONFIG[currentPhase].textColor }}
+              onClick={() => navigate('/phases')}
+            >
+              Ver fases
+            </button>
+          </motion.div>
+        )}
 
-        {/* Calendar grid */}
-        <div className="cal-grid-wrap">
-          <div className="cal-dow-row">
-            {DAYS_SHORT.map((d) => <div key={d} className="cal-dow">{d}</div>)}
+        {isCurrentViewMonth && !profile?.last_period_start && (
+          <div className="setup-prompt" onClick={() => navigate('/settings')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#FF8C42" strokeWidth="2" />
+              <line x1="12" y1="8" x2="12" y2="12" stroke="#FF8C42" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="12" cy="16" r="1" fill="#FF8C42" />
+            </svg>
+            Configura tu ciclo en Ajustes para ver las fases
           </div>
-          <div className="cal-grid">
-            {Array(firstDow).fill(null).map((_, i) => <div key={`e${i}`} />)}
-            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-              const ds = getDateStr(day)
-              const phase = getDayPhase(day)
-              const today_ = isToday(day)
-              const isPeriod = periodDates.has(ds)
-              const isEdit = editMode && editDraft.has(ds)
-              const phaseColor = phase ? PHASE_CONFIG[phase].color : '#F5F0E8'
+        )}
 
-              return (
-                <motion.button
-                  key={day}
-                  className={`cal-day${today_ ? ' today' : ''}${isPeriod && !editMode ? ' period' : ''}${isEdit ? ' edit-period' : ''}`}
-                  style={{ background: editMode ? (isEdit ? 'rgba(229, 62, 62, 0.35)' : '#F5F0E8') : phaseColor }}
-                  onClick={() => editMode ? toggleEditDay(day) : undefined}
-                  whileTap={{ scale: 0.9 }}
+        {/* Main calendar card */}
+        <div className="cal-card">
+
+          {/* Month nav inside the card header */}
+          <div className="cal-card-header">
+            <button className="cal-arrow-btn" onClick={prevMonth}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            <div className="cal-month-center">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={monthKey}
+                  className="cal-month-label"
+                  initial={{ opacity: 0, y: monthDir * 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: monthDir * -8 }}
+                  transition={{ duration: 0.16 }}
                 >
-                  <span className="cal-day-num">{day}</span>
-                  {today_ && <span className="cal-today-ring" />}
-                  {isPeriod && !editMode && <span className="cal-period-dot" />}
-                </motion.button>
-              )
-            })}
-          </div>
-        </div>
+                  {MONTHS_ES[viewMonth]} {viewYear}
+                </motion.span>
+              </AnimatePresence>
+            </div>
 
-        {/* Info panel */}
-        <div className="cal-info-panel">
-          <div className="cal-info-item">
-            <span className="cal-info-label">Hoy</span>
-            <span className="cal-info-value">
-              {todayDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
-            </span>
-          </div>
-          <div className="cal-info-item" style={{ flex: 2, textAlign: 'center' }}>
-            <span className="cal-info-label">Fase actual</span>
-            <span className="cal-info-value" style={{ color: currentPhase ? PHASE_CONFIG[currentPhase].textColor : '#9B8B72' }}>
-              {currentPhase ? PHASE_CONFIG[currentPhase].label : '—'}
-            </span>
-          </div>
-          <div className="cal-info-item" style={{ textAlign: 'right' }}>
-            <span className="cal-info-label">Flujo</span>
-            <span className="cal-info-value">{todayLog?.flow_level?.replace('_', ' ') || '—'}</span>
-          </div>
-        </div>
+            <button className="cal-arrow-btn" onClick={nextMonth}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
 
-        {todayLog?.symptoms?.length ? (
-          <div className="cal-symptoms-bar">
-            {todayLog.symptoms.map((s) => (
-              <span key={s} className="cal-symptom-tag">{s}</span>
+            {!isCurrentViewMonth && (
+              <button className="cal-today-chip" onClick={() => {
+                setViewMonth(todayDate.getMonth())
+                setViewYear(todayDate.getFullYear())
+                setSelectedDay(null)
+              }}>Hoy</button>
+            )}
+          </div>
+
+          {/* DOW headers */}
+          <div className="cal-dow-row">
+            {DAYS_SHORT.map(d => <div key={d} className="cal-dow">{d}</div>)}
+          </div>
+
+          {/* Grid */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={monthKey}
+              className="cal-grid"
+              initial={{ opacity: 0, x: monthDir * 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: monthDir * -20 }}
+              transition={{ duration: 0.18 }}
+            >
+              {Array(firstDow).fill(null).map((_, i) => <div key={`gap-${i}`} />)}
+              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                const ds = getDateStr(day)
+                const phase = getDayPhase(day)
+                const today_ = isToday(day)
+                const isPeriod = periodDates.has(ds) && !editMode
+                const isEditMarked = editMode && editDraft.has(ds)
+                const isSelected = selectedDay === day && !editMode
+                const phaseColor = phase ? PHASE_CONFIG[phase].color : '#F5F0E8'
+                const phaseText = phase ? PHASE_CONFIG[phase].textColor : '#5A3E2B'
+
+                return (
+                  <motion.button
+                    key={day}
+                    className={[
+                      'cal-day',
+                      today_ ? 'cal-day--today' : '',
+                      isPeriod ? 'cal-day--period' : '',
+                      isEditMarked ? 'cal-day--edit' : '',
+                      isSelected ? 'cal-day--selected' : '',
+                    ].filter(Boolean).join(' ')}
+                    style={{
+                      background: editMode
+                        ? (isEditMarked ? 'rgba(176,48,80,0.15)' : '#F5F0E8')
+                        : today_ ? 'linear-gradient(135deg, #C07868 0%, #D49564 100%)'
+                        : phaseColor,
+                      color: today_ ? '#fff' : phaseText,
+                      outline: isEditMarked ? '2px solid #B03050' : 'none',
+                      outlineOffset: '-2px',
+                    }}
+                    onClick={() => editMode ? toggleEditDay(day) : setSelectedDay(prev => prev === day ? null : day)}
+                    whileTap={{ scale: 0.88 }}
+                  >
+                    <span className="cal-day-num">{day}</span>
+                    {isPeriod && <span className="cal-day-dot" />}
+                    {isSelected && <span className="cal-day-ring" />}
+                  </motion.button>
+                )
+              })}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Legend */}
+          <div className="cal-legend">
+            {(Object.entries(PHASE_CONFIG) as [CyclePhase, typeof PHASE_CONFIG[CyclePhase]][]).map(([phase, cfg]) => (
+              <div key={phase} className="cal-legend-item">
+                <span className="cal-legend-dot" style={{ background: cfg.color, borderColor: cfg.textColor }} />
+                <span className="cal-legend-label">{cfg.label}</span>
+              </div>
             ))}
           </div>
-        ) : null}
+        </div>
 
-        {/* Edit / save buttons */}
+        {/* Selected day detail */}
         <AnimatePresence>
+          {selectedDay && !editMode && (
+            <motion.div
+              key={`sel-${selectedDay}`}
+              className="cal-detail-card"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.18 }}
+            >
+              <div className="cal-detail-row">
+                <span className="cal-detail-date">
+                  {selectedDay} de {MONTHS_ES[viewMonth]}
+                </span>
+                {selectedPhase && (
+                  <span
+                    className="cal-detail-badge"
+                    style={{ background: PHASE_CONFIG[selectedPhase].color, color: PHASE_CONFIG[selectedPhase].textColor }}
+                  >
+                    {PHASE_CONFIG[selectedPhase].label}
+                  </span>
+                )}
+              </div>
+              {selectedPhase && (
+                <p className="cal-detail-tip">{PHASE_CONFIG[selectedPhase].tips[0]}</p>
+              )}
+              {getDateStr(selectedDay) === todayStr && todayLog?.flow_level && (
+                <span className="cal-detail-flow">Flujo: {todayLog.flow_level.replace('_', ' ')}</span>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Edit bar / button */}
+        <AnimatePresence mode="wait">
           {!editMode ? (
             <motion.button
-              key="edit"
+              key="edit-btn"
               className="cal-edit-btn"
               onClick={openEdit}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
-              Editar fechas de periodo
+              Registrar periodo
             </motion.button>
           ) : (
-            <motion.div key="edit-bar" className="cal-edit-bar"
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-              <p className="cal-edit-hint">Toca los días para marcar/desmarcar tu periodo</p>
+            <motion.div
+              key="edit-bar"
+              className="cal-edit-bar"
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
+            >
+              <p className="cal-edit-hint">
+                Toca los días de tu periodo
+                {editDraft.size > 0 && <strong> · {editDraft.size} días</strong>}
+              </p>
               <div className="cal-edit-actions">
                 <button className="cal-cancel-btn" onClick={() => setEditMode(false)}>Cancelar</button>
                 <button className="cal-save-btn" onClick={saveEdit}>Guardar</button>
@@ -264,6 +359,8 @@ export const Calendar = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <div style={{ height: 16 }} />
       </div>
 
       <BottomNav />

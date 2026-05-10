@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PHASE_CONFIG, type CyclePhase } from '../utils/cycleUtils'
-import faseMenstrual from '../assets/images/fase-menstrual.png'
-import faseFolicular from '../assets/images/fase-folicular.png'
-import faseOvulacion from '../assets/images/fase-ovulacion.png'
-import faseLutea from '../assets/images/fase-lutea.png'
-import faseCentral from '../assets/images/fase-central.png'
+import faseMenstrual from '../assets/images/Arriba.png'
+import faseFolicular from '../assets/images/Derecha.png'
+import faseOvulacion from '../assets/images/Abajo.png'
+import faseLutea from '../assets/images/Izquierda.png'
+import faseCentral from '../assets/images/LogoCentral.png'
 
 const PHASE_ORDER: CyclePhase[] = ['menstrual', 'follicular', 'ovulation', 'luteal']
 
 const PHASE_POSITIONS = {
-  menstrual: { top: '0%', left: '50%' },
-  follicular: { top: '50%', left: '100%' },
-  ovulation: { top: '100%', left: '50%' },
-  luteal: { top: '50%', left: '0%' },
+  menstrual: { top: '-8%', left: '50%' },
+  follicular: { top: '50%', left: '108%' },
+  ovulation: { top: '108%', left: '50%' },
+  luteal: { top: '50%', left: '-8%' },
 }
 
 const PHASE_IMAGES: Record<CyclePhase, string> = {
@@ -108,7 +108,6 @@ export const PhaseWheel = ({ currentPhase }: PhaseWheelProps) => {
                   <img src={PHASE_IMAGES[phase]} alt={cfg.label} className="phase-wheel-item-img" />
                 </div>
                 <span className="phase-wheel-name">{cfg.label}</span>
-                <span className="phase-wheel-desc">{PHASE_DETAILS[phase].shortDesc}</span>
                 {isCurrent && <div className="phase-wheel-indicator" />}
               </motion.button>
             )
