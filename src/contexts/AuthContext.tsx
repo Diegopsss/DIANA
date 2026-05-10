@@ -32,7 +32,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Don't set user during password recovery — ResetPassword handles that
+      if (event === 'PASSWORD_RECOVERY') return
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)

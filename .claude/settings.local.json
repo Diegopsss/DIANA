@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(xxd /Users/diego/Desktop/torrproyectos-y-soluciones/personal/DianaEnviroment/DIANA/.env)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx vercel *)",
+      "Bash(xargs cat)"
     ]
   }
 }

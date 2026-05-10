@@ -9,6 +9,14 @@ export const SplashScreen = () => {
   const { user } = useAuth()
 
   useEffect(() => {
+    // If a recovery token lands on the root, redirect immediately to reset-password
+    const hash = window.location.hash
+    const params = new URLSearchParams(window.location.search)
+    if (hash.includes('type=recovery') || params.get('type') === 'recovery') {
+      navigate('/reset-password' + window.location.hash + window.location.search, { replace: true })
+      return
+    }
+
     const timer = setTimeout(() => {
       navigate(user ? '/home' : '/login')
     }, 1500)

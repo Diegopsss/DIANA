@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../utils/supabase'
+import logoHeader from '../assets/images/logo-header.png'
 
 export const ResetPassword = () => {
   const navigate = useNavigate()
@@ -71,7 +72,7 @@ export const ResetPassword = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="auth-brand-content">
-          <div className="auth-brand-logo" />
+          <img src={logoHeader} alt="Diana" className="auth-brand-logo" />
           <h1 className="auth-brand-name">Diana</h1>
           <p className="auth-brand-tagline">
             Tu compañera de salud y bienestar personal
