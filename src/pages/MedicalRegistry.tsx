@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -51,6 +51,9 @@ export const MedicalRegistry = () => {
   const [downloadingPDF, setDownloadingPDF] = useState(false)
   const [isExisting, setIsExisting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showDownloadSuccess, setShowDownloadSuccess] = useState(false)
+  const [countdown, setCountdown] = useState(5)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSaveBeforeLeave, setShowSaveBeforeLeave] = useState(false)
   const [showToast, setShowToast] = useState(false)
@@ -89,6 +92,22 @@ export const MedicalRegistry = () => {
   useEffect(() => {
     if (user) fetchMedicalHistory()
   }, [user])
+
+  useEffect(() => {
+    if (!showDownloadSuccess) return
+    setCountdown(5)
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current!)
+          navigate('/home')
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(countdownRef.current!)
+  }, [showDownloadSuccess, navigate])
 
   const fetchMedicalHistory = async () => {
     try {
@@ -1090,8 +1109,13 @@ export const MedicalRegistry = () => {
                 <button
                   onClick={async () => {
                     setDownloadingPDF(true)
-                    try { await downloadMedicalPDF(formData) }
-                    finally { setDownloadingPDF(false) }
+                    try {
+                      await downloadMedicalPDF(formData)
+                      setShowSuccessModal(false)
+                      setShowDownloadSuccess(true)
+                    } finally {
+                      setDownloadingPDF(false)
+                    }
                   }}
                   disabled={downloadingPDF}
                   style={{
@@ -1151,6 +1175,96 @@ export const MedicalRegistry = () => {
                   Regresar al inicio
                 </button>
               </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* PDF Download Success Modal */}
+      <AnimatePresence>
+        {showDownloadSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, backgroundColor: 'rgba(42,26,14,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 2000, padding: '24px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 24 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              style={{
+                background: '#FEFCF9', borderRadius: '28px',
+                padding: '44px 40px 36px', maxWidth: '400px', width: '100%',
+                textAlign: 'center', boxShadow: '0 24px 60px rgba(42,26,14,0.18)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
+                style={{
+                  width: '80px', height: '80px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #4ade80, #22c55e)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  boxShadow: '0 8px 24px rgba(34,197,94,0.35)',
+                }}
+              >
+                <svg width="36" height="36" viewBox="0 0 52 52" fill="none">
+                  <motion.path
+                    d="M14 27l9 9 16-18"
+                    stroke="white" strokeWidth="4"
+                    strokeLinecap="round" strokeLinejoin="round"
+                    initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+                    transition={{ delay: 0.3, duration: 0.45, ease: 'easeOut' }}
+                  />
+                </svg>
+              </motion.div>
+
+              <motion.h3
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                style={{
+                  fontFamily: "Georgia,'Times New Roman',serif",
+                  fontSize: '24px', fontWeight: 400, color: '#2A1A0E',
+                  margin: '0 0 10px', letterSpacing: '-0.3px',
+                }}
+              >
+                ¡PDF descargado!
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32 }}
+                style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 16px', lineHeight: 1.6 }}
+              >
+                Tu historial médico fue guardado exitosamente en tu dispositivo.
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                style={{ fontSize: '13px', color: '#C07868', margin: '0 0 28px', fontWeight: 500 }}
+              >
+                Regresando al inicio en {countdown}s...
+              </motion.p>
+
+              <motion.button
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45 }}
+                onClick={() => { clearInterval(countdownRef.current!); navigate('/home') }}
+                style={{
+                  width: '100%', padding: '14px',
+                  background: 'var(--diana-orange)', border: 'none',
+                  borderRadius: '14px', fontSize: '15px', fontWeight: 600,
+                  color: 'white', cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Ir al inicio ahora
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
