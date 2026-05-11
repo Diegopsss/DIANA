@@ -53,6 +53,8 @@ export const MedicalRegistry = () => {
   const [isExisting, setIsExisting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [emailModal, setEmailModal] = useState<'success' | 'error' | null>(null)
+  const [showLeaveModal, setShowLeaveModal] = useState(false)
+  const [showSaveBeforeLeave, setShowSaveBeforeLeave] = useState(false)
   const [countdown, setCountdown] = useState(5)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -238,6 +240,44 @@ export const MedicalRegistry = () => {
       setShowToast(true)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const saveAndLeave = async () => {
+    if (!user) { navigate('/settings'); return }
+    setSaving(true)
+    try {
+      const toInt = (v: string) => (v !== '' ? parseInt(v, 10) : null)
+      const historyData = {
+        user_id: user.id,
+        full_name:                  formData.personal_data.full_name || null,
+        age:                        toInt(formData.personal_data.age),
+        birth_date:                 formData.personal_data.birth_date || null,
+        allergies:                  formData.personal_data.allergies || null,
+        blood_type:                 formData.personal_data.blood_type || null,
+        has_infections:             !!formData.personal_data.vaginal_infections,
+        vaginal_infections_detail:  formData.personal_data.vaginal_infections || null,
+        had_surgeries:              !!formData.personal_data.surgeries,
+        surgeries_detail:           formData.personal_data.surgeries || null,
+        pregnancy_count:     toInt(formData.obstetric_history.pregnancies),
+        delivery_count:      toInt(formData.obstetric_history.deliveries),
+        c_section_count:     toInt(formData.obstetric_history.cesareans),
+        abortion_loss_count: toInt(formData.obstetric_history.abortions),
+        pelvic_pain:       formData.current_symptoms.pelvic_pain || null,
+        abnormal_bleeding: formData.current_symptoms.abnormal_bleeding || null,
+        other_symptoms:    formData.current_symptoms.other_symptoms || null,
+        menarche_age:     toInt(formData.menstrual_history.menarche_age),
+        cycle_duration:   toInt(formData.menstrual_history.cycle_duration),
+        cycle_regularity: formData.menstrual_history.cycle_regularity || null,
+        is_cycle_regular: formData.menstrual_history.cycle_regularity === 'regular',
+        last_pap_smear:   formData.menstrual_history.last_pap_smear || null,
+        last_ultrasound:  formData.menstrual_history.last_ultrasound || null,
+        updated_at:       new Date().toISOString(),
+      }
+      await supabase.from('medical_history').upsert(historyData, { onConflict: 'user_id' })
+    } finally {
+      setSaving(false)
+      navigate('/settings')
     }
   }
 
@@ -690,7 +730,7 @@ export const MedicalRegistry = () => {
         </div>
         
         <div className="header-right">
-          <button className="profile-button">
+          <button className="profile-button" onClick={() => setShowLeaveModal(true)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="8" r="4" stroke="var(--diana-text)" strokeWidth="2"/>
               <path d="M4 20C4 16.6863 6.68629 14 10 14H14C17.3137 14 20 16.6863 20 20" stroke="var(--diana-text)" strokeWidth="2"/>
@@ -791,6 +831,204 @@ export const MedicalRegistry = () => {
           )}
         </div>
       </main>
+
+      {/* Modal 1 — Confirmar salida */}
+      <AnimatePresence>
+        {showLeaveModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, backgroundColor: 'rgba(42,26,14,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 2000, padding: '24px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 24 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              style={{
+                background: '#FEFCF9', borderRadius: '28px',
+                padding: '40px 36px 32px', maxWidth: '380px', width: '100%',
+                textAlign: 'center', boxShadow: '0 24px 60px rgba(42,26,14,0.18)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
+                style={{
+                  width: '64px', height: '64px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FBB96E, #FF8C42)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 20px',
+                  boxShadow: '0 8px 20px rgba(255,140,66,0.3)',
+                }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 9v4M12 17h.01" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="white" strokeWidth="2" strokeLinejoin="round"/>
+                </svg>
+              </motion.div>
+
+              <motion.h3
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                style={{
+                  fontFamily: "Georgia,'Times New Roman',serif",
+                  fontSize: '22px', fontWeight: 400, color: '#2A1A0E',
+                  margin: '0 0 10px', letterSpacing: '-0.3px',
+                }}
+              >
+                ¿Seguro que quieres salir?
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.27 }}
+                style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 28px', lineHeight: 1.6 }}
+              >
+                Estás editando tu historial médico. Si sales sin guardar podrías perder los cambios.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.33 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+              >
+                <button
+                  onClick={() => { setShowLeaveModal(false); setShowSaveBeforeLeave(true) }}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: 'var(--diana-orange)', border: 'none',
+                    borderRadius: '14px', fontSize: '15px', fontWeight: 600,
+                    color: 'white', cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Sí, salir
+                </button>
+                <button
+                  onClick={() => setShowLeaveModal(false)}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: 'transparent', border: '1.5px solid #E4D8C8',
+                    borderRadius: '14px', fontSize: '15px', fontWeight: 600,
+                    color: '#5D4E37', cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Cancelar
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal 2 — ¿Guardar antes de salir? */}
+      <AnimatePresence>
+        {showSaveBeforeLeave && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, backgroundColor: 'rgba(42,26,14,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 2000, padding: '24px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 24 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              style={{
+                background: '#FEFCF9', borderRadius: '28px',
+                padding: '40px 36px 32px', maxWidth: '380px', width: '100%',
+                textAlign: 'center', boxShadow: '0 24px 60px rgba(42,26,14,0.18)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
+                style={{
+                  width: '64px', height: '64px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #B0A898, #9BAD98)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 20px',
+                  boxShadow: '0 8px 20px rgba(155,173,152,0.35)',
+                }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="white" strokeWidth="2"/>
+                  <polyline points="17,21 17,13 7,13 7,21" stroke="white" strokeWidth="2"/>
+                  <polyline points="7,3 7,8 15,8" stroke="white" strokeWidth="2"/>
+                </svg>
+              </motion.div>
+
+              <motion.h3
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                style={{
+                  fontFamily: "Georgia,'Times New Roman',serif",
+                  fontSize: '22px', fontWeight: 400, color: '#2A1A0E',
+                  margin: '0 0 10px', letterSpacing: '-0.3px',
+                }}
+              >
+                ¿Guardar antes de salir?
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.27 }}
+                style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 28px', lineHeight: 1.6 }}
+              >
+                ¿Quieres guardar los cambios en tu historial médico antes de ir al perfil?
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.33 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+              >
+                <button
+                  onClick={() => { setShowSaveBeforeLeave(false); saveAndLeave() }}
+                  disabled={saving}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: saving ? '#9CA3AF' : 'var(--diana-orange)',
+                    border: 'none', borderRadius: '14px',
+                    fontSize: '15px', fontWeight: 600,
+                    color: 'white', cursor: saving ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: '8px', fontFamily: 'inherit',
+                  }}
+                >
+                  {saving ? (
+                    <>
+                      <div style={{
+                        width: '16px', height: '16px',
+                        border: '2px solid white', borderTop: '2px solid transparent',
+                        borderRadius: '50%', animation: 'spin 0.75s linear infinite',
+                      }} />
+                      Guardando...
+                    </>
+                  ) : 'Sí, guardar y salir'}
+                </button>
+                <button
+                  onClick={() => { setShowSaveBeforeLeave(false); navigate('/settings') }}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: 'transparent', border: '1.5px solid #E4D8C8',
+                    borderRadius: '14px', fontSize: '15px', fontWeight: 600,
+                    color: '#5D4E37', cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  No, salir sin guardar
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Success Modal */}
       <AnimatePresence>
