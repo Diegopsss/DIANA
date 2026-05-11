@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../utils/supabase'
 import { DateInput } from '../components/DateInput'
+import { downloadMedicalPDF } from '../utils/generateMedicalPDF'
 
 interface MedicalHistory {
   id?: string
@@ -47,8 +48,15 @@ export const MedicalRegistry = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [downloadingPDF, setDownloadingPDF] = useState(false)
+  const [isExisting, setIsExisting] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [emailModal, setEmailModal] = useState<'success' | 'error' | null>(null)
+  const [countdown, setCountdown] = useState(5)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   
   const [formData, setFormData] = useState<MedicalHistory>({
     personal_data: {
@@ -81,10 +89,24 @@ export const MedicalRegistry = () => {
   })
 
   useEffect(() => {
-    if (user) {
-      fetchMedicalHistory()
-    }
+    if (user) fetchMedicalHistory()
   }, [user])
+
+  useEffect(() => {
+    if (emailModal !== 'error') return
+    setCountdown(5)
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current!)
+          navigate('/home')
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(countdownRef.current!)
+  }, [emailModal, navigate])
 
   const fetchMedicalHistory = async () => {
     try {
@@ -100,7 +122,36 @@ export const MedicalRegistry = () => {
       }
 
       if (data) {
-        setFormData(data)
+        setIsExisting(true)
+        setFormData({
+          personal_data: {
+            full_name: data.full_name || '',
+            age: data.age?.toString() || '',
+            birth_date: data.birth_date || '',
+            allergies: data.allergies || '',
+            blood_type: data.blood_type || '',
+            vaginal_infections: data.vaginal_infections_detail || '',
+            surgeries: data.surgeries_detail || '',
+          },
+          obstetric_history: {
+            pregnancies: data.pregnancy_count?.toString() || '',
+            deliveries: data.delivery_count?.toString() || '',
+            cesareans: data.c_section_count?.toString() || '',
+            abortions: data.abortion_loss_count?.toString() || '',
+          },
+          current_symptoms: {
+            pelvic_pain: data.pelvic_pain || '',
+            abnormal_bleeding: data.abnormal_bleeding || '',
+            other_symptoms: data.other_symptoms || '',
+          },
+          menstrual_history: {
+            menarche_age: data.menarche_age?.toString() || '',
+            cycle_duration: data.cycle_duration?.toString() || '',
+            cycle_regularity: data.cycle_regularity || '',
+            last_pap_smear: data.last_pap_smear || '',
+            last_ultrasound: data.last_ultrasound || '',
+          },
+        })
       }
     } catch (err) {
       console.error('Error:', err)
@@ -134,16 +185,42 @@ export const MedicalRegistry = () => {
 
     setSaving(true)
     try {
+      const toInt = (v: string) => (v !== '' ? parseInt(v, 10) : null)
+
       const historyData = {
-        ...formData,
-        user_id: user.id
+        user_id: user.id,
+        // personal
+        full_name:                  formData.personal_data.full_name || null,
+        age:                        toInt(formData.personal_data.age),
+        birth_date:                 formData.personal_data.birth_date || null,
+        allergies:                  formData.personal_data.allergies || null,
+        blood_type:                 formData.personal_data.blood_type || null,
+        has_infections:             !!formData.personal_data.vaginal_infections,
+        vaginal_infections_detail:  formData.personal_data.vaginal_infections || null,
+        had_surgeries:              !!formData.personal_data.surgeries,
+        surgeries_detail:           formData.personal_data.surgeries || null,
+        // obstetric
+        pregnancy_count:     toInt(formData.obstetric_history.pregnancies),
+        delivery_count:      toInt(formData.obstetric_history.deliveries),
+        c_section_count:     toInt(formData.obstetric_history.cesareans),
+        abortion_loss_count: toInt(formData.obstetric_history.abortions),
+        // symptoms
+        pelvic_pain:       formData.current_symptoms.pelvic_pain || null,
+        abnormal_bleeding: formData.current_symptoms.abnormal_bleeding || null,
+        other_symptoms:    formData.current_symptoms.other_symptoms || null,
+        // menstrual
+        menarche_age:     toInt(formData.menstrual_history.menarche_age),
+        cycle_duration:   toInt(formData.menstrual_history.cycle_duration),
+        cycle_regularity: formData.menstrual_history.cycle_regularity || null,
+        is_cycle_regular: formData.menstrual_history.cycle_regularity === 'regular',
+        last_pap_smear:   formData.menstrual_history.last_pap_smear || null,
+        last_ultrasound:  formData.menstrual_history.last_ultrasound || null,
+        updated_at:       new Date().toISOString(),
       }
 
       const { error } = await supabase
         .from('medical_history')
-        .upsert(historyData, {
-          onConflict: 'user_id'
-        })
+        .upsert(historyData, { onConflict: 'user_id' })
 
       if (error) {
         console.error('Error saving medical history:', error)
@@ -152,9 +229,9 @@ export const MedicalRegistry = () => {
         return
       }
 
-      setToastMessage('Información médica guardada exitosamente')
-      setShowToast(true)
-      
+      setIsExisting(true)
+      setShowSuccessModal(true)
+
     } catch (err) {
       console.error('Error:', err)
       setToastMessage('Error inesperado al guardar')
@@ -166,25 +243,21 @@ export const MedicalRegistry = () => {
 
   const handleSendPDF = async () => {
     if (!user) return
-    setToastMessage('Enviando información médica a tu correo...')
-    setShowToast(true)
-
+    setSendingEmail(true)
     try {
       const { error } = await supabase.functions.invoke('send-medical-email', {
-        body: { user_id: user.id, medical_data: formData },
+        body: { user_id: user.id },
       })
-
-      if (error) {
-        console.error('Error sending email:', error)
-        setToastMessage('Error al enviar el correo. Intenta de nuevo.')
-      } else {
-        setToastMessage('Información enviada exitosamente a tu correo')
-      }
+      setShowSuccessModal(false)
+      setEmailModal(error ? 'error' : 'success')
+      if (error) console.error('Error sending email:', error)
     } catch (err) {
       console.error('Error:', err)
-      setToastMessage('Error inesperado al enviar el correo')
+      setShowSuccessModal(false)
+      setEmailModal('error')
+    } finally {
+      setSendingEmail(false)
     }
-    setShowToast(true)
   }
 
   const stepVariants = {
@@ -582,35 +655,9 @@ export const MedicalRegistry = () => {
               <polyline points="7,3 7,8 15,8" stroke="currentColor" strokeWidth="2"/>
             </svg>
           )}
-          {saving ? 'Guardando...' : 'Guardar Información'}
+          {saving ? 'Guardando...' : isExisting ? 'Actualizar Información' : 'Guardar Información'}
         </motion.button>
 
-        <motion.button
-          onClick={handleSendPDF}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="pdf-button"
-          style={{
-            background: 'var(--diana-text)',
-            color: 'white',
-            border: 'none',
-            padding: '16px 32px',
-            borderRadius: '20px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            transition: 'all 0.2s'
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2"/>
-            <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/>
-          </svg>
-          Enviar PDF
-        </motion.button>
       </div>
     </motion.div>
   )
@@ -744,6 +791,375 @@ export const MedicalRegistry = () => {
           )}
         </div>
       </main>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(42, 26, 14, 0.55)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2000,
+              padding: '24px',
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowSuccessModal(false) }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 24 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              style={{
+                background: '#FEFCF9',
+                borderRadius: '28px',
+                padding: '44px 40px 36px',
+                maxWidth: '400px',
+                width: '100%',
+                textAlign: 'center',
+                boxShadow: '0 24px 60px rgba(42, 26, 14, 0.18)',
+              }}
+            >
+              {/* Checkmark circle */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #4ade80, #22c55e)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  boxShadow: '0 8px 24px rgba(34, 197, 94, 0.35)',
+                }}
+              >
+                <svg width="36" height="36" viewBox="0 0 52 52" fill="none">
+                  <motion.path
+                    d="M14 27l9 9 16-18"
+                    stroke="white"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ delay: 0.3, duration: 0.45, ease: 'easeOut' }}
+                  />
+                </svg>
+              </motion.div>
+
+              <motion.h3
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                style={{
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontSize: '24px',
+                  fontWeight: 400,
+                  color: '#2A1A0E',
+                  margin: '0 0 10px',
+                  letterSpacing: '-0.3px',
+                }}
+              >
+                {isExisting ? '¡Información actualizada!' : '¡Información guardada!'}
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32 }}
+                style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 32px', lineHeight: 1.6 }}
+              >
+                Tu historial médico está seguro. También puedes enviarlo a tu correo como respaldo.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+              >
+                <button
+                  onClick={handleSendPDF}
+                  disabled={sendingEmail}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: sendingEmail ? '#9CA3AF' : 'var(--diana-orange)',
+                    border: 'none',
+                    borderRadius: '14px',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    color: 'white',
+                    cursor: sendingEmail ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'background 0.2s',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {sendingEmail ? (
+                    <>
+                      <div style={{
+                        width: '16px', height: '16px',
+                        border: '2px solid white', borderTop: '2px solid transparent',
+                        borderRadius: '50%', animation: 'spin 0.75s linear infinite', flexShrink: 0,
+                      }} />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2"/>
+                        <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                      Enviar al correo
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => navigate('/home')}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: 'transparent',
+                    border: '1.5px solid #E4D8C8',
+                    borderRadius: '14px',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    color: '#5D4E37',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.2s, background 0.2s',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Regresar al inicio
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Email Result Modal */}
+      <AnimatePresence>
+        {emailModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(42, 26, 14, 0.55)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2000,
+              padding: '24px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 24 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              style={{
+                background: '#FEFCF9',
+                borderRadius: '28px',
+                padding: '44px 40px 36px',
+                maxWidth: '400px',
+                width: '100%',
+                textAlign: 'center',
+                boxShadow: '0 24px 60px rgba(42, 26, 14, 0.18)',
+              }}
+            >
+              {emailModal === 'success' ? (
+                <>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
+                    style={{
+                      width: '80px', height: '80px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #4ade80, #22c55e)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      margin: '0 auto 24px',
+                      boxShadow: '0 8px 24px rgba(34, 197, 94, 0.35)',
+                    }}
+                  >
+                    <svg width="36" height="36" viewBox="0 0 52 52" fill="none">
+                      <motion.path
+                        d="M14 27l9 9 16-18"
+                        stroke="white" strokeWidth="4"
+                        strokeLinecap="round" strokeLinejoin="round"
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ delay: 0.3, duration: 0.45, ease: 'easeOut' }}
+                      />
+                    </svg>
+                  </motion.div>
+
+                  <motion.h3
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    style={{
+                      fontFamily: "Georgia, 'Times New Roman', serif",
+                      fontSize: '24px', fontWeight: 400, color: '#2A1A0E',
+                      margin: '0 0 10px', letterSpacing: '-0.3px',
+                    }}
+                  >
+                    ¡Correo enviado!
+                  </motion.h3>
+
+                  <motion.p
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.32 }}
+                    style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 32px', lineHeight: 1.6 }}
+                  >
+                    Tu historial médico fue enviado exitosamente a tu correo electrónico.
+                  </motion.p>
+
+                  <motion.button
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    onClick={() => navigate('/home')}
+                    style={{
+                      width: '100%', padding: '14px',
+                      background: 'var(--diana-orange)', border: 'none',
+                      borderRadius: '14px', fontSize: '15px', fontWeight: 600,
+                      color: 'white', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                  >
+                    Regresar al inicio
+                  </motion.button>
+                </>
+              ) : (
+                <>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
+                    style={{
+                      width: '80px', height: '80px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #f87171, #dc2626)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      margin: '0 auto 24px',
+                      boxShadow: '0 8px 24px rgba(220, 38, 38, 0.3)',
+                    }}
+                  >
+                    <svg width="36" height="36" viewBox="0 0 52 52" fill="none">
+                      <motion.path
+                        d="M16 16 L36 36 M36 16 L16 36"
+                        stroke="white" strokeWidth="4"
+                        strokeLinecap="round"
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
+                      />
+                    </svg>
+                  </motion.div>
+
+                  <motion.h3
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    style={{
+                      fontFamily: "Georgia, 'Times New Roman', serif",
+                      fontSize: '24px', fontWeight: 400, color: '#2A1A0E',
+                      margin: '0 0 10px', letterSpacing: '-0.3px',
+                    }}
+                  >
+                    Error al enviar
+                  </motion.h3>
+
+                  <motion.p
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.32 }}
+                    style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 16px', lineHeight: 1.6 }}
+                  >
+                    No se pudo enviar el correo. Tu información ya está guardada de forma segura.
+                  </motion.p>
+
+                  <motion.p
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    style={{ fontSize: '13px', color: '#C07868', margin: '0 0 24px', fontWeight: 500 }}
+                  >
+                    Regresando al inicio en {countdown}s...
+                  </motion.p>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45 }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+                  >
+                    <button
+                      onClick={async () => {
+                        setDownloadingPDF(true)
+                        try { await downloadMedicalPDF(formData) }
+                        finally { setDownloadingPDF(false) }
+                      }}
+                      disabled={downloadingPDF}
+                      style={{
+                        width: '100%', padding: '14px',
+                        background: downloadingPDF ? '#9CA3AF' : 'var(--diana-orange)',
+                        border: 'none', borderRadius: '14px',
+                        fontSize: '15px', fontWeight: 600,
+                        color: 'white', cursor: downloadingPDF ? 'not-allowed' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        gap: '8px', fontFamily: 'inherit', transition: 'background 0.2s',
+                      }}
+                    >
+                      {downloadingPDF ? (
+                        <>
+                          <div style={{
+                            width: '16px', height: '16px',
+                            border: '2px solid white', borderTop: '2px solid transparent',
+                            borderRadius: '50%', animation: 'spin 0.75s linear infinite', flexShrink: 0,
+                          }} />
+                          Generando PDF...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 15V3M12 15l-4-4M12 15l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                          Descargar PDF
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => { clearInterval(countdownRef.current!); navigate('/home') }}
+                      style={{
+                        width: '100%', padding: '14px',
+                        background: 'transparent', border: '1.5px solid #E4D8C8',
+                        borderRadius: '14px', fontSize: '15px', fontWeight: 600,
+                        color: '#5D4E37', cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      Ir al inicio ahora
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Toast Notification */}
       <AnimatePresence>

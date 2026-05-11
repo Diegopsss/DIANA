@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import logoSplash from '../assets/images/logo-splash.png'
+import logoHeader from '../assets/images/logo-header.png'
 
 export const SplashScreen = () => {
   const navigate = useNavigate()
@@ -33,7 +33,7 @@ export const SplashScreen = () => {
         transition={{ duration: 1, ease: "easeOut" }}
       >
         <motion.img
-          src={logoSplash}
+          src={logoHeader}
           alt="Diana"
           className="splash-logo-img"
           initial={{ opacity: 0, y: 20 }}
