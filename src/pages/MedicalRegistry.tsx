@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -48,17 +48,13 @@ export const MedicalRegistry = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [sendingEmail, setSendingEmail] = useState(false)
   const [downloadingPDF, setDownloadingPDF] = useState(false)
   const [isExisting, setIsExisting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [emailModal, setEmailModal] = useState<'success' | 'error' | null>(null)
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showSaveBeforeLeave, setShowSaveBeforeLeave] = useState(false)
-  const [countdown, setCountdown] = useState(5)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   
   const [formData, setFormData] = useState<MedicalHistory>({
     personal_data: {
@@ -93,22 +89,6 @@ export const MedicalRegistry = () => {
   useEffect(() => {
     if (user) fetchMedicalHistory()
   }, [user])
-
-  useEffect(() => {
-    if (emailModal !== 'error') return
-    setCountdown(5)
-    countdownRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownRef.current!)
-          navigate('/home')
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(countdownRef.current!)
-  }, [emailModal, navigate])
 
   const fetchMedicalHistory = async () => {
     try {
@@ -278,25 +258,6 @@ export const MedicalRegistry = () => {
     } finally {
       setSaving(false)
       navigate('/settings')
-    }
-  }
-
-  const handleSendPDF = async () => {
-    if (!user) return
-    setSendingEmail(true)
-    try {
-      const { error } = await supabase.functions.invoke('send-medical-email', {
-        body: { user_id: user.id },
-      })
-      setShowSuccessModal(false)
-      setEmailModal(error ? 'error' : 'success')
-      if (error) console.error('Error sending email:', error)
-    } catch (err) {
-      console.error('Error:', err)
-      setShowSuccessModal(false)
-      setEmailModal('error')
-    } finally {
-      setSendingEmail(false)
     }
   }
 
@@ -1117,7 +1078,7 @@ export const MedicalRegistry = () => {
                 transition={{ delay: 0.32 }}
                 style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 32px', lineHeight: 1.6 }}
               >
-                Tu historial médico está seguro. También puedes enviarlo a tu correo como respaldo.
+                Tu historial médico está seguro. Puedes descargarlo en PDF como respaldo.
               </motion.p>
 
               <motion.div
@@ -1127,18 +1088,22 @@ export const MedicalRegistry = () => {
                 style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
               >
                 <button
-                  onClick={handleSendPDF}
-                  disabled={sendingEmail}
+                  onClick={async () => {
+                    setDownloadingPDF(true)
+                    try { await downloadMedicalPDF(formData) }
+                    finally { setDownloadingPDF(false) }
+                  }}
+                  disabled={downloadingPDF}
                   style={{
                     width: '100%',
                     padding: '14px',
-                    background: sendingEmail ? '#9CA3AF' : 'var(--diana-orange)',
+                    background: downloadingPDF ? '#9CA3AF' : 'var(--diana-orange)',
                     border: 'none',
                     borderRadius: '14px',
                     fontSize: '15px',
                     fontWeight: 600,
                     color: 'white',
-                    cursor: sendingEmail ? 'not-allowed' : 'pointer',
+                    cursor: downloadingPDF ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1147,22 +1112,22 @@ export const MedicalRegistry = () => {
                     fontFamily: 'inherit',
                   }}
                 >
-                  {sendingEmail ? (
+                  {downloadingPDF ? (
                     <>
                       <div style={{
                         width: '16px', height: '16px',
                         border: '2px solid white', borderTop: '2px solid transparent',
                         borderRadius: '50%', animation: 'spin 0.75s linear infinite', flexShrink: 0,
                       }} />
-                      Enviando...
+                      Generando PDF...
                     </>
                   ) : (
                     <>
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2"/>
-                        <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M12 15V3M12 15l-4-4M12 15l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                       </svg>
-                      Enviar al correo
+                      Descargar PDF
                     </>
                   )}
                 </button>
@@ -1186,214 +1151,6 @@ export const MedicalRegistry = () => {
                   Regresar al inicio
                 </button>
               </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Email Result Modal */}
-      <AnimatePresence>
-        {emailModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              backgroundColor: 'rgba(42, 26, 14, 0.55)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2000,
-              padding: '24px',
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: 24 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-              style={{
-                background: '#FEFCF9',
-                borderRadius: '28px',
-                padding: '44px 40px 36px',
-                maxWidth: '400px',
-                width: '100%',
-                textAlign: 'center',
-                boxShadow: '0 24px 60px rgba(42, 26, 14, 0.18)',
-              }}
-            >
-              {emailModal === 'success' ? (
-                <>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
-                    style={{
-                      width: '80px', height: '80px', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #4ade80, #22c55e)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      margin: '0 auto 24px',
-                      boxShadow: '0 8px 24px rgba(34, 197, 94, 0.35)',
-                    }}
-                  >
-                    <svg width="36" height="36" viewBox="0 0 52 52" fill="none">
-                      <motion.path
-                        d="M14 27l9 9 16-18"
-                        stroke="white" strokeWidth="4"
-                        strokeLinecap="round" strokeLinejoin="round"
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ delay: 0.3, duration: 0.45, ease: 'easeOut' }}
-                      />
-                    </svg>
-                  </motion.div>
-
-                  <motion.h3
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    style={{
-                      fontFamily: "Georgia, 'Times New Roman', serif",
-                      fontSize: '24px', fontWeight: 400, color: '#2A1A0E',
-                      margin: '0 0 10px', letterSpacing: '-0.3px',
-                    }}
-                  >
-                    ¡Correo enviado!
-                  </motion.h3>
-
-                  <motion.p
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.32 }}
-                    style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 32px', lineHeight: 1.6 }}
-                  >
-                    Tu historial médico fue enviado exitosamente a tu correo electrónico.
-                  </motion.p>
-
-                  <motion.button
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    onClick={() => navigate('/home')}
-                    style={{
-                      width: '100%', padding: '14px',
-                      background: 'var(--diana-orange)', border: 'none',
-                      borderRadius: '14px', fontSize: '15px', fontWeight: 600,
-                      color: 'white', cursor: 'pointer', fontFamily: 'inherit',
-                    }}
-                  >
-                    Regresar al inicio
-                  </motion.button>
-                </>
-              ) : (
-                <>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1, type: 'spring', stiffness: 220, damping: 16 }}
-                    style={{
-                      width: '80px', height: '80px', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #f87171, #dc2626)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      margin: '0 auto 24px',
-                      boxShadow: '0 8px 24px rgba(220, 38, 38, 0.3)',
-                    }}
-                  >
-                    <svg width="36" height="36" viewBox="0 0 52 52" fill="none">
-                      <motion.path
-                        d="M16 16 L36 36 M36 16 L16 36"
-                        stroke="white" strokeWidth="4"
-                        strokeLinecap="round"
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
-                      />
-                    </svg>
-                  </motion.div>
-
-                  <motion.h3
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    style={{
-                      fontFamily: "Georgia, 'Times New Roman', serif",
-                      fontSize: '24px', fontWeight: 400, color: '#2A1A0E',
-                      margin: '0 0 10px', letterSpacing: '-0.3px',
-                    }}
-                  >
-                    Error al enviar
-                  </motion.h3>
-
-                  <motion.p
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.32 }}
-                    style={{ fontSize: '14px', color: '#9B8B72', margin: '0 0 16px', lineHeight: 1.6 }}
-                  >
-                    No se pudo enviar el correo. Tu información ya está guardada de forma segura.
-                  </motion.p>
-
-                  <motion.p
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    style={{ fontSize: '13px', color: '#C07868', margin: '0 0 24px', fontWeight: 500 }}
-                  >
-                    Regresando al inicio en {countdown}s...
-                  </motion.p>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.45 }}
-                    style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
-                  >
-                    <button
-                      onClick={async () => {
-                        setDownloadingPDF(true)
-                        try { await downloadMedicalPDF(formData) }
-                        finally { setDownloadingPDF(false) }
-                      }}
-                      disabled={downloadingPDF}
-                      style={{
-                        width: '100%', padding: '14px',
-                        background: downloadingPDF ? '#9CA3AF' : 'var(--diana-orange)',
-                        border: 'none', borderRadius: '14px',
-                        fontSize: '15px', fontWeight: 600,
-                        color: 'white', cursor: downloadingPDF ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        gap: '8px', fontFamily: 'inherit', transition: 'background 0.2s',
-                      }}
-                    >
-                      {downloadingPDF ? (
-                        <>
-                          <div style={{
-                            width: '16px', height: '16px',
-                            border: '2px solid white', borderTop: '2px solid transparent',
-                            borderRadius: '50%', animation: 'spin 0.75s linear infinite', flexShrink: 0,
-                          }} />
-                          Generando PDF...
-                        </>
-                      ) : (
-                        <>
-                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 15V3M12 15l-4-4M12 15l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                          </svg>
-                          Descargar PDF
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => { clearInterval(countdownRef.current!); navigate('/home') }}
-                      style={{
-                        width: '100%', padding: '14px',
-                        background: 'transparent', border: '1.5px solid #E4D8C8',
-                        borderRadius: '14px', fontSize: '15px', fontWeight: 600,
-                        color: '#5D4E37', cursor: 'pointer', fontFamily: 'inherit',
-                      }}
-                    >
-                      Ir al inicio ahora
-                    </button>
-                  </motion.div>
-                </>
-              )}
             </motion.div>
           </motion.div>
         )}
