@@ -33,6 +33,8 @@ interface ForumPost {
   profiles: { full_name: string | null } | null
   likesCount: number
   likedByMe: boolean
+  replyCount: number
+  previewReplies: ForumReply[]
 }
 
 const timeAgo = (dateStr: string) => {
@@ -66,17 +68,26 @@ export const Forum = () => {
   // Action sheet (edit / delete menu)
   const [actionPost, setActionPost] = useState<ForumPost | null>(null)
 
-  // Reply state
-  const [replyPost, setReplyPost] = useState<ForumPost | null>(null)
+  // Detail modal state
+  const [detailPost, setDetailPost] = useState<ForumPost | null>(null)
   const [replies, setReplies] = useState<ForumReply[]>([])
   const [loadingReplies, setLoadingReplies] = useState(false)
   const [replyContent, setReplyContent] = useState('')
   const [replyAnonymous, setReplyAnonymous] = useState(false)
   const [submittingReply, setSubmittingReply] = useState(false)
 
+  const [myProfile, setMyProfile] = useState<{ full_name: string | null } | null>(null)
+
   const isAdmin = !!user && ADMIN_IDS.includes(user.id)
+  const hasName = !!(myProfile?.full_name?.trim())
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    supabase.from('profiles').select('full_name').eq('id', user.id).single()
+      .then(({ data }) => setMyProfile(data))
+  }, [user])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -109,33 +120,56 @@ export const Forum = () => {
       return
     }
 
-    // Get unique user IDs that are NOT anonymous
+    const postIds = postsData.map((p) => p.id)
     const visibleUserIds = [...new Set(
       postsData.filter((p) => !p.is_anonymous).map((p) => p.user_id)
     )]
 
-    const postIds = postsData.map((p) => p.id)
-
-    // Fetch profiles and likes in parallel
-    const [{ data: profilesData }, { data: likesData }] = await Promise.all([
+    // Fetch profiles, likes and replies in parallel
+    const [{ data: profilesData }, { data: likesData }, { data: repliesData }] = await Promise.all([
       visibleUserIds.length > 0
         ? supabase.from('profiles').select('id, full_name').in('id', visibleUserIds)
         : Promise.resolve({ data: [] }),
-      supabase.from('forum_likes').select('post_id, user_id').in('post_id', postIds)
+      supabase.from('forum_likes').select('post_id, user_id').in('post_id', postIds),
+      supabase.from('forum_replies')
+        .select('id, post_id, user_id, content, is_anonymous, created_at')
+        .in('post_id', postIds)
+        .order('created_at', { ascending: true }),
     ])
 
-    // Create a map of user_id -> full_name
+    // Fetch profiles for non-anonymous reply authors
+    const replyAuthorIds = [...new Set(
+      repliesData?.filter((r) => !r.is_anonymous).map((r) => r.user_id) ?? []
+    )]
+    const { data: replyProfilesData } = replyAuthorIds.length > 0
+      ? await supabase.from('profiles').select('id, full_name').in('id', replyAuthorIds)
+      : { data: [] }
+
     const profileMap = new Map<string, string | null>()
-    profilesData?.forEach((p) => {
-      profileMap.set(p.id, p.full_name)
+    profilesData?.forEach((p) => profileMap.set(p.id, p.full_name))
+
+    const replyProfileMap = new Map<string, string | null>()
+    replyProfilesData?.forEach((p) => replyProfileMap.set(p.id, p.full_name))
+
+    // Group replies by post
+    const repliesByPost = new Map<string, ForumReply[]>()
+    repliesData?.forEach((r) => {
+      const list = repliesByPost.get(r.post_id) ?? []
+      list.push({ ...r, profiles: { full_name: r.is_anonymous ? null : (replyProfileMap.get(r.user_id) ?? null) } })
+      repliesByPost.set(r.post_id, list)
     })
 
-    const enriched: ForumPost[] = postsData.map((p) => ({
-      ...p,
-      profiles: { full_name: profileMap.get(p.user_id) ?? null },
-      likesCount: likesData?.filter((l) => l.post_id === p.id).length ?? 0,
-      likedByMe: likesData?.some((l) => l.post_id === p.id && l.user_id === user.id) ?? false,
-    }))
+    const enriched: ForumPost[] = postsData.map((p) => {
+      const postReplies = repliesByPost.get(p.id) ?? []
+      return {
+        ...p,
+        profiles: { full_name: profileMap.get(p.user_id) ?? null },
+        likesCount: likesData?.filter((l) => l.post_id === p.id).length ?? 0,
+        likedByMe: likesData?.some((l) => l.post_id === p.id && l.user_id === user.id) ?? false,
+        replyCount: postReplies.length,
+        previewReplies: postReplies.slice(0, 3),
+      }
+    })
 
     setPosts(enriched)
     setLoading(false)
@@ -147,15 +181,19 @@ export const Forum = () => {
 
   const toggleLike = async (postId: string) => {
     if (!user) return
-    const post = posts.find((p) => p.id === postId)
+    const post = posts.find((p) => p.id === postId) ?? detailPost
     if (!post) return
+
+    const newLiked = !post.likedByMe
+    const newCount = newLiked ? post.likesCount + 1 : post.likesCount - 1
 
     setPosts((prev) =>
       prev.map((p) =>
-        p.id === postId
-          ? { ...p, likedByMe: !p.likedByMe, likesCount: p.likedByMe ? p.likesCount - 1 : p.likesCount + 1 }
-          : p
+        p.id === postId ? { ...p, likedByMe: newLiked, likesCount: newCount } : p
       )
+    )
+    setDetailPost((prev) =>
+      prev?.id === postId ? { ...prev, likedByMe: newLiked, likesCount: newCount } : prev
     )
 
     if (post.likedByMe) {
@@ -172,7 +210,7 @@ export const Forum = () => {
     setNewType('consejo')
     setNewTitle('')
     setNewContent('')
-    setIsAnonymous(false)
+    setIsAnonymous(!hasName)
     setShowCreate(true)
   }
 
@@ -182,7 +220,7 @@ export const Forum = () => {
     setNewType(post.type)
     setNewTitle(post.title)
     setNewContent(post.content)
-    setIsAnonymous(post.is_anonymous)
+    setIsAnonymous(post.is_anonymous || !hasName)
     setShowCreate(true)
   }
 
@@ -248,51 +286,76 @@ export const Forum = () => {
     }
   }
 
-  // ── Replies ───────────────────────────────────────────────────────────────
+  // ── Detail modal ──────────────────────────────────────────────────────────
 
-  const openReplies = async (post: ForumPost) => {
-    setReplyPost(post)
+  const openDetail = async (post: ForumPost) => {
+    setDetailPost(post)
     setReplyContent('')
-    setReplyAnonymous(false)
+    setReplyAnonymous(!hasName)
     setLoadingReplies(true)
-    const { data } = await supabase
-      .from('forum_replies')
-      .select('id, post_id, user_id, content, is_anonymous, created_at')
-      .eq('post_id', post.id)
-      .order('created_at', { ascending: true })
-    if (data && data.length > 0) {
-      const visibleIds = [...new Set(data.filter((r) => !r.is_anonymous).map((r) => r.user_id))]
-      const { data: profilesData } = visibleIds.length > 0
-        ? await supabase.from('profiles').select('id, full_name').in('id', visibleIds)
-        : { data: [] }
-      const profileMap = new Map<string, string | null>()
-      profilesData?.forEach((p) => profileMap.set(p.id, p.full_name))
-      setReplies(data.map((r) => ({ ...r, profiles: { full_name: profileMap.get(r.user_id) ?? null } })))
-    } else {
+    try {
+      const { data, error } = await supabase
+        .from('forum_replies')
+        .select('id, post_id, user_id, content, is_anonymous, created_at')
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      if (data && data.length > 0) {
+        const visibleIds = [...new Set(data.filter((r) => !r.is_anonymous).map((r) => r.user_id))]
+        const { data: profilesData } = visibleIds.length > 0
+          ? await supabase.from('profiles').select('id, full_name').in('id', visibleIds)
+          : { data: [] }
+        const profileMap = new Map<string, string | null>()
+        profilesData?.forEach((p) => profileMap.set(p.id, p.full_name))
+        setReplies(data.map((r) => ({ ...r, profiles: { full_name: profileMap.get(r.user_id) ?? null } })))
+      } else {
+        setReplies([])
+      }
+    } catch (err) {
+      console.error('forum_replies fetch error:', err)
       setReplies([])
+    } finally {
+      setLoadingReplies(false)
     }
-    setLoadingReplies(false)
   }
 
-  const closeReplies = () => {
-    setReplyPost(null)
+  const closeDetail = () => {
+    setDetailPost(null)
     setReplies([])
     setReplyContent('')
   }
 
   const submitReply = async () => {
-    if (!user || !replyPost || !replyContent.trim()) return
+    if (!user || !detailPost || !replyContent.trim()) return
     setSubmittingReply(true)
-    const { data } = await supabase
-      .from('forum_replies')
-      .insert({ post_id: replyPost.id, user_id: user.id, content: replyContent.trim(), is_anonymous: replyAnonymous })
-      .select('id, post_id, user_id, content, is_anonymous, created_at')
-      .single()
-    if (data) {
-      setReplies((prev) => [...prev, { ...data, profiles: { full_name: replyAnonymous ? null : (user as { email?: string }).email ?? null } }])
+    try {
+      const { data, error } = await supabase
+        .from('forum_replies')
+        .insert({ post_id: detailPost.id, user_id: user.id, content: replyContent.trim(), is_anonymous: replyAnonymous })
+        .select('id, post_id, user_id, content, is_anonymous, created_at')
+        .single()
+      if (error) throw error
+      if (data) {
+        const newReply: ForumReply = { ...data, profiles: { full_name: replyAnonymous ? null : (myProfile?.full_name ?? null) } }
+        setReplies((prev) => [...prev, newReply])
+        setReplyContent('')
+        setPosts((prev) => prev.map((p) => {
+          if (p.id !== detailPost.id) return p
+          return {
+            ...p,
+            replyCount: p.replyCount + 1,
+            previewReplies: p.replyCount < 3 ? [...p.previewReplies, newReply] : p.previewReplies,
+          }
+        }))
+        setDetailPost((prev) =>
+          prev ? { ...prev, replyCount: prev.replyCount + 1 } : prev
+        )
+      }
+    } catch (err) {
+      console.error('forum_replies insert error:', err)
+    } finally {
+      setSubmittingReply(false)
     }
-    setReplyContent('')
-    setSubmittingReply(false)
   }
 
   const replyAuthorName = (reply: ForumReply) => {
@@ -422,23 +485,41 @@ export const Forum = () => {
 
                 <h3 className="forum-post-title">{post.title}</h3>
                 <p className="forum-post-content">{post.content}</p>
+
+                {post.replyCount > 0 && (
+                  <div className="forum-reply-preview" onClick={() => openDetail(post)}>
+                    <span className="forum-reply-preview-count">
+                      💬 {post.replyCount} {post.replyCount === 1 ? 'respuesta' : 'respuestas'}
+                    </span>
+                    {post.previewReplies.map((reply) => (
+                      <div key={reply.id} className="forum-reply-preview-item">
+                        <span className="forum-reply-preview-author">{replyAuthorName(reply)}</span>
+                        <span className="forum-reply-preview-text"> {reply.content}</span>
+                      </div>
+                    ))}
+                    {post.replyCount > 3 && (
+                      <span className="forum-reply-preview-more">
+                        Ver {post.replyCount - 3} {post.replyCount - 3 === 1 ? 'respuesta' : 'respuestas'} más →
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="forum-post-footer">
                   <span className="forum-post-meta">
                     {authorName(post)} · {timeAgo(post.created_at)}
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {post.type === 'experiencia' && (
-                      <button
-                        className="forum-reply-btn"
-                        onClick={() => openReplies(post)}
-                        title="Ver respuestas"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span>Responder</span>
-                      </button>
-                    )}
+                    <button
+                      className="forum-reply-btn"
+                      onClick={() => openDetail(post)}
+                      title="Ver respuestas"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span>Responder</span>
+                    </button>
                     <motion.button
                       className={`forum-like-btn${post.likedByMe ? ' liked' : ''}`}
                       onClick={() => toggleLike(post.id)}
@@ -583,11 +664,15 @@ export const Forum = () => {
               <div className="forum-anon-row">
                 <div>
                   <div className="forum-anon-label">Publicar como anónima</div>
-                  <div className="forum-anon-sub">Tu nombre no será visible</div>
+                  <div className="forum-anon-sub">
+                    {hasName
+                      ? 'Tu nombre no será visible'
+                      : 'Configura tu nombre en tu perfil para publicar con tu nombre'}
+                  </div>
                 </div>
                 <button
-                  className={`forum-toggle${isAnonymous ? ' on' : ''}`}
-                  onClick={() => setIsAnonymous((v) => !v)}
+                  className={`forum-toggle${isAnonymous ? ' on' : ''}${!hasName ? ' locked' : ''}`}
+                  onClick={() => { if (hasName) setIsAnonymous((v) => !v) }}
                 >
                   <div className="forum-toggle-knob" />
                 </button>
@@ -607,72 +692,133 @@ export const Forum = () => {
         )}
       </AnimatePresence>
 
-      {/* Replies panel */}
+      {/* Post detail modal – Instagram style */}
       <AnimatePresence>
-        {replyPost && (
+        {detailPost && (
           <motion.div
-            className="forum-create-overlay"
+            className="forum-detail-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={(e) => { if (e.target === e.currentTarget) closeReplies() }}
           >
             <motion.div
-              className="forum-create-sheet forum-replies-sheet"
+              className="forum-detail-modal"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 280 }}
             >
-              <div className="forum-create-handle" />
-              <h2 className="forum-create-title" style={{ fontSize: 15 }}>{replyPost.title}</h2>
-              <p className="forum-replies-original">{replyPost.content}</p>
-
-              <div className="forum-replies-list">
-                {loadingReplies ? (
-                  <div className="forum-skeletons">
-                    {[1, 2].map((i) => <div key={i} className="forum-skeleton" style={{ height: 56 }} />)}
-                  </div>
-                ) : replies.length === 0 ? (
-                  <p className="forum-replies-empty">Aún no hay respuestas. ¡Sé la primera!</p>
-                ) : (
-                  replies.map((reply) => (
-                    <div key={reply.id} className="forum-reply-item">
-                      <span className="forum-reply-author">{replyAuthorName(reply)}</span>
-                      <span className="forum-reply-time"> · {timeAgo(reply.created_at)}</span>
-                      <p className="forum-reply-content">{reply.content}</p>
-                    </div>
-                  ))
-                )}
+              {/* Topbar */}
+              <div className="forum-detail-topbar">
+                <button className="forum-detail-back" onClick={closeDetail}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <span
+                  className="forum-detail-tag"
+                  style={detailPost.type === 'consejo'
+                    ? { background: '#FFF3E0', color: '#E07845' }
+                    : { background: '#EEE8F8', color: '#8B6DB8' }}
+                >
+                  {detailPost.type === 'consejo' ? '💡 Consejo' : '💬 Experiencia'}
+                </span>
+                <div style={{ width: 36 }} />
               </div>
 
-              <div className="forum-reply-compose">
-                <textarea
-                  className="forum-textarea"
-                  placeholder="Escribe tu respuesta..."
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  maxLength={500}
-                  rows={3}
-                />
-                <div className="forum-anon-row" style={{ marginBottom: 8 }}>
-                  <div>
-                    <div className="forum-anon-label">Responder como anónima</div>
+              {/* Scrollable body */}
+              <div className="forum-detail-scroll">
+                {/* Main post */}
+                <div className="forum-detail-post">
+                  <div className="forum-detail-post-byline">
+                    <span className="forum-detail-post-author">{authorName(detailPost)}</span>
+                    <span className="forum-detail-post-time"> · {timeAgo(detailPost.created_at)}</span>
                   </div>
-                  <button
-                    className={`forum-toggle${replyAnonymous ? ' on' : ''}`}
-                    onClick={() => setReplyAnonymous((v) => !v)}
-                  >
-                    <div className="forum-toggle-knob" />
-                  </button>
+                  <h2 className="forum-detail-post-title">{detailPost.title}</h2>
+                  <p className="forum-detail-post-content">{detailPost.content}</p>
+                  <div className="forum-detail-post-actions">
+                    <motion.button
+                      className={`forum-like-btn${detailPost.likedByMe ? ' liked' : ''}`}
+                      onClick={() => toggleLike(detailPost.id)}
+                      whileTap={{ scale: 0.82 }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill={detailPost.likedByMe ? 'currentColor' : 'none'}>
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {detailPost.likesCount > 0 && <span>{detailPost.likesCount}</span>}
+                    </motion.button>
+                  </div>
                 </div>
+
+                {/* Comments */}
+                <div className="forum-detail-comments-section">
+                  <div className="forum-detail-comments-header">
+                    {loadingReplies
+                      ? 'Cargando...'
+                      : replies.length === 0
+                        ? 'Comentarios'
+                        : `${replies.length} ${replies.length === 1 ? 'comentario' : 'comentarios'}`}
+                  </div>
+
+                  {loadingReplies ? (
+                    <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {[1, 2, 3].map((i) => <div key={i} className="forum-skeleton" style={{ height: 60, borderRadius: 12 }} />)}
+                    </div>
+                  ) : replies.length === 0 ? (
+                    <p className="forum-detail-empty">¡Sé la primera en comentar!</p>
+                  ) : (
+                    replies.map((reply) => (
+                      <div key={reply.id} className="forum-detail-comment">
+                        <div className="forum-detail-comment-header">
+                          <span className="forum-detail-comment-author">{replyAuthorName(reply)}</span>
+                          <span className="forum-detail-comment-time">{timeAgo(reply.created_at)}</span>
+                        </div>
+                        <p className="forum-detail-comment-content">{reply.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Sticky compose bar */}
+              <div className="forum-detail-compose">
                 <button
-                  className="forum-submit-btn"
-                  onClick={submitReply}
-                  disabled={!replyContent.trim() || submittingReply}
+                  className={`forum-detail-anon-btn${!hasName ? ' locked' : ''}${replyAnonymous ? ' is-anon' : ''}`}
+                  onClick={() => { if (hasName) setReplyAnonymous((v) => !v) }}
                 >
-                  {submittingReply ? 'Enviando...' : 'Enviar respuesta'}
+                  <span>{replyAnonymous ? 'Anónima' : (myProfile?.full_name || 'Tú')}</span>
+                  {hasName && (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                      <polyline points="6 9 12 15 18 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </button>
+                <div className="forum-detail-input-row">
+                  <input
+                    className="forum-detail-input"
+                    placeholder="Añade un comentario..."
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    maxLength={500}
+                  />
+                  <motion.button
+                    className="forum-detail-send-btn"
+                    onClick={submitReply}
+                    disabled={!replyContent.trim() || submittingReply}
+                    whileTap={{ scale: 0.88 }}
+                  >
+                    {submittingReply ? (
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ animation: 'forum-spin 0.8s linear infinite' }}>
+                        <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="2.5" strokeDasharray="40" strokeDashoffset="14" />
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <line x1="22" y1="2" x2="11" y2="13" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      </svg>
+                    )}
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
